@@ -1,3 +1,5 @@
+// Ported to Delphi from C++ by @davidberneda
+// david@steema.com
 unit MyoDLL;
 
 interface
@@ -6,7 +8,7 @@ const Myo_DLL =
 {$IFDEF CPUX86}
   'myo32.dll'
 {$ELSE}
-{$IFDEF CPU64}
+{$IFDEF CPUX64}
   'myo64.dll'
 {$ENDIF}
 {$ENDIF}
