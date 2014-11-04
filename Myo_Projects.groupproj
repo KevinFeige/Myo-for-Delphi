@@ -1,0 +1,72 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{2195B6AC-A227-4FBC-8DE9-4E8243305DC3}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="FMX\Test\Myo_FMX_Test.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Myo.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DclMyo.dproj">
+            <Dependencies>Myo.dproj</Dependencies>
+        </Projects>
+        <Projects Include="VCL\Test\Myo_VCL_Test.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Myo_FMX_Test">
+        <MSBuild Projects="FMX\Test\Myo_FMX_Test.dproj"/>
+    </Target>
+    <Target Name="Myo_FMX_Test:Clean">
+        <MSBuild Projects="FMX\Test\Myo_FMX_Test.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Myo_FMX_Test:Make">
+        <MSBuild Projects="FMX\Test\Myo_FMX_Test.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Myo">
+        <MSBuild Projects="Myo.dproj"/>
+    </Target>
+    <Target Name="Myo:Clean">
+        <MSBuild Projects="Myo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Myo:Make">
+        <MSBuild Projects="Myo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DclMyo" DependsOnTargets="Myo">
+        <MSBuild Projects="DclMyo.dproj"/>
+    </Target>
+    <Target Name="DclMyo:Clean" DependsOnTargets="Myo:Clean">
+        <MSBuild Projects="DclMyo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DclMyo:Make" DependsOnTargets="Myo:Make">
+        <MSBuild Projects="DclMyo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Myo_VCL_Test">
+        <MSBuild Projects="VCL\Test\Myo_VCL_Test.dproj"/>
+    </Target>
+    <Target Name="Myo_VCL_Test:Clean">
+        <MSBuild Projects="VCL\Test\Myo_VCL_Test.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Myo_VCL_Test:Make">
+        <MSBuild Projects="VCL\Test\Myo_VCL_Test.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Myo_FMX_Test;Myo;DclMyo;Myo_VCL_Test"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Myo_FMX_Test:Clean;Myo:Clean;DclMyo:Clean;Myo_VCL_Test:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Myo_FMX_Test:Make;Myo:Make;DclMyo:Make;Myo_VCL_Test:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

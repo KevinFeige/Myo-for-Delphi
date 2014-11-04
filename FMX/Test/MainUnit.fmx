@@ -1,0 +1,272 @@
+object MainForm: TMainForm
+  Left = 0
+  Top = 0
+  Caption = 'Myo for Delphi'
+  ClientHeight = 480
+  ClientWidth = 733
+  Position = ScreenCenter
+  WindowState = wsMaximized
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  DesignerMasterStyle = 0
+  object Layout1: TLayout
+    Align = Left
+    Size.Width = 108.000000000000000000
+    Size.Height = 480.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    object BVibrate: TButton
+      Enabled = False
+      Position.X = 17.000000000000000000
+      Position.Y = 48.000000000000000000
+      TabOrder = 1
+      Text = 'Vibrate'
+      OnClick = BVibrateClick
+    end
+    object BConnect: TButton
+      Position.X = 17.000000000000000000
+      Position.Y = 16.000000000000000000
+      TabOrder = 0
+      Text = 'Connect'
+      OnClick = BConnectClick
+    end
+    object Text1: TText
+      Position.X = 8.000000000000000000
+      Position.Y = 111.000000000000000000
+      Size.Width = 89.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object LArm: TLabel
+      Position.X = 8.000000000000000000
+      Position.Y = 168.000000000000000000
+      Size.Width = 89.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Arm: Unknown'
+    end
+    object LPaired: TLabel
+      Position.X = 8.000000000000000000
+      Position.Y = 192.000000000000000000
+      Size.Width = 89.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object LiveCharts: TCheckBox
+      Position.X = 7.000000000000000000
+      Position.Y = 232.000000000000000000
+      Size.Width = 98.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = 'Live Charts'
+    end
+    object CBLegends: TCheckBox
+      IsChecked = True
+      Position.X = 8.000000000000000000
+      Position.Y = 256.000000000000000000
+      Size.Width = 92.000000000000000000
+      Size.Height = 19.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+      Text = 'Legends'
+      OnChange = CBLegendsChange
+    end
+    object Text2: TText
+      Position.X = 8.000000000000000000
+      Position.Y = 88.000000000000000000
+      Size.Width = 89.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      Text = 'Version:'
+    end
+    object LTimerPerSec: TText
+      Position.X = 9.000000000000000000
+      Position.Y = 312.000000000000000000
+      Size.Width = 90.000000000000000000
+      Size.Height = 25.000000000000000000
+      Size.PlatformDefault = False
+    end
+  end
+  object Layout2: TLayout
+    Align = Client
+    Size.Width = 625.000000000000000000
+    Size.Height = 480.000000000000000000
+    Size.PlatformDefault = False
+    object Chart1: TChart
+      Legend.Alignment = laTop
+      Legend.Title.Alignment = taCenter
+      Legend.Title.Text.Strings = (
+        'Accelerometer')
+      Title.Text.Strings = (
+        'TChart')
+      Title.Visible = False
+      BottomAxis.DateTimeFormat = 'M/d/yyyy'
+      View3D = False
+      Zoom.Brush.Kind = None
+      Zoom.Pen.Fill.Color = claSilver
+      Align = Client
+      TabOrder = 7
+      Size.Width = 625.000000000000000000
+      Size.Height = 56.000000000000000000
+      Size.PlatformDefault = False
+      ColorPaletteIndex = 13
+      object AccelX: TFastLineSeries
+        Title = 'X'
+        DrawStyle = flAll
+        LinePen.Color = xFF4466A3
+        LinePen.Fill.Color = xFF4466A3
+        XValues.DateTime = True
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object AccelY: TFastLineSeries
+        Title = 'Y'
+        DrawStyle = flAll
+        LinePen.Color = xFFF39C35
+        LinePen.Fill.Color = xFFF39C35
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object AccelZ: TFastLineSeries
+        Title = 'Z'
+        DrawStyle = flAll
+        LinePen.Color = xFFF14C14
+        LinePen.Fill.Color = xFFF14C14
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+    end
+    object Chart2: TChart
+      Position.Y = 56.000000000000000000
+      Legend.Alignment = laTop
+      Legend.Title.Alignment = taCenter
+      Legend.Title.Text.Strings = (
+        'Gyroscope')
+      Title.Text.Strings = (
+        'TChart')
+      Title.Visible = False
+      View3D = False
+      Zoom.Brush.Kind = None
+      Zoom.Pen.Fill.Color = claSilver
+      Align = Bottom
+      TabOrder = 6
+      Size.Width = 625.000000000000000000
+      Size.Height = 232.000000000000000000
+      Size.PlatformDefault = False
+      ColorPaletteIndex = 13
+      object GyroX: TFastLineSeries
+        Title = 'X'
+        DrawStyle = flAll
+        LinePen.Color = xFF4466A3
+        LinePen.Fill.Color = xFF4466A3
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object GyroY: TFastLineSeries
+        Title = 'Y'
+        DrawStyle = flAll
+        LinePen.Color = xFFF39C35
+        LinePen.Fill.Color = xFFF39C35
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object GyroZ: TFastLineSeries
+        Title = 'Z'
+        DrawStyle = flAll
+        LinePen.Color = xFFF14C14
+        LinePen.Fill.Color = xFFF14C14
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+    end
+    object Chart3: TChart
+      Position.Y = 288.000000000000000000
+      Legend.Alignment = laTop
+      Legend.Title.Alignment = taCenter
+      Legend.Title.Text.Strings = (
+        'Orientation')
+      Title.Text.Strings = (
+        'TChart')
+      Title.Visible = False
+      View3D = False
+      Zoom.Brush.Kind = None
+      Zoom.Pen.Fill.Color = claSilver
+      Align = Bottom
+      TabOrder = 5
+      Size.Width = 625.000000000000000000
+      Size.Height = 192.000000000000000000
+      Size.PlatformDefault = False
+      ColorPaletteIndex = 13
+      object OrientX: TFastLineSeries
+        Title = 'X'
+        DrawStyle = flAll
+        LinePen.Color = xFF4466A3
+        LinePen.Fill.Color = xFF4466A3
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object OrientY: TFastLineSeries
+        Title = 'Y'
+        DrawStyle = flAll
+        LinePen.Color = xFFF39C35
+        LinePen.Fill.Color = xFFF39C35
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object OrientZ: TFastLineSeries
+        Title = 'Z'
+        DrawStyle = flAll
+        LinePen.Color = xFFF14C14
+        LinePen.Fill.Color = xFFF14C14
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object OrientW: TFastLineSeries
+        Title = 'W'
+        DrawStyle = flAll
+        LinePen.Color = xFF4E97A8
+        LinePen.Fill.Color = xFF4E97A8
+        XValues.Name = 'X'
+        XValues.Order = loNone
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+    end
+  end
+  object Myo1: TMyo
+    OnAccelerometer = Myo1Accelerometer
+    OnArmLost = Myo1ArmLost
+    OnArmRecognized = Myo1ArmRecognized
+    OnConnect = Myo1Connect
+    OnDisconnect = Myo1Disconnect
+    OnGyroscope = Myo1Gyroscope
+    OnOrientation = Myo1Orientation
+    OnPair = Myo1Pair
+    OnPose = Myo1Pose
+    OnRssi = Myo1Rssi
+    OnUnpair = Myo1Unpair
+    Left = 184
+    Top = 16
+  end
+end
