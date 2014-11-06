@@ -1,11 +1,13 @@
 Source code and examples using a Thalmic Myo device 
-with Embarcadero Delphi XE7 (Windows platform).
+with Embarcadero Delphi Studio XE7.
+
+https://github.com/davidberneda/Myo-for-Delphi
 
 Install:
 --------
 
 1) Open the Myo_Projects project group, 
-or just the Myo.dpk and DclMyo.dpk package projects.
+or just the Source\Myo.dpk and Source\DclMyo.dpk package projects.
 
 2) Compile the Myo.dpk package.
 
@@ -13,6 +15,17 @@ or just the Myo.dpk and DclMyo.dpk package projects.
 
 This will add a new TMyo component at ide toolbar, valid
 for both VCL and Firemonkey frameworks.
+
+Myo SDK:
+--------
+
+For Windows: 
+
+Copy the "Myo_SDK\Windows" dlls to a folder that is visible
+to Windows PATH environment variable, for example:
+
+myo32.dll   ->  c:\windows\syswow64
+myo64.dll   ->  c:\windows\system32
 
 
 Usage:
@@ -29,4 +42,8 @@ loop to retrieve the Myo device events:
 See the included examples for more info about obtaining and
 plotting the Myo motion/orientation values and poses.
 
+------------
+
+@davidberneda
+david@steema.com
 
