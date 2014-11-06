@@ -24,7 +24,6 @@ object MainForm: TMainForm
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitHeight = 409
     object LArm: TLabel
       Left = 16
       Top = 144
@@ -48,6 +47,18 @@ object MainForm: TMainForm
     object LPaired: TLabel
       Left = 16
       Top = 180
+      Width = 3
+      Height = 13
+    end
+    object LPose: TLabel
+      Left = 16
+      Top = 161
+      Width = 3
+      Height = 13
+    end
+    object LTimesPerSec: TLabel
+      Left = 16
+      Top = 270
       Width = 3
       Height = 13
     end
@@ -89,6 +100,15 @@ object MainForm: TMainForm
       Caption = 'Live Charts'
       TabOrder = 3
     end
+    object BSignal: TButton
+      Left = 16
+      Top = 361
+      Width = 75
+      Height = 25
+      Caption = 'Signal'
+      TabOrder = 4
+      OnClick = BSignalClick
+    end
   end
   object Panel2: TPanel
     Left = 137
@@ -98,15 +118,11 @@ object MainForm: TMainForm
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitLeft = 280
-    ExplicitTop = 208
-    ExplicitWidth = 185
-    ExplicitHeight = 41
     object Chart2: TChart
       Left = 0
       Top = 193
       Width = 585
-      Height = 273
+      Height = 168
       Legend.Alignment = laTop
       Legend.Title.Alignment = taCenter
       Legend.Title.Text.Strings = (
@@ -117,7 +133,6 @@ object MainForm: TMainForm
       View3D = False
       Align = alTop
       TabOrder = 0
-      ExplicitTop = 88
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
       object GyroX: TFastLineSeries
@@ -163,8 +178,6 @@ object MainForm: TMainForm
       View3D = False
       Align = alTop
       TabOrder = 1
-      ExplicitLeft = 6
-      ExplicitTop = -29
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
       object AccelX: TFastLineSeries
@@ -197,9 +210,9 @@ object MainForm: TMainForm
     end
     object Chart3: TChart
       Left = 0
-      Top = 466
+      Top = 361
       Width = 585
-      Height = 273
+      Height = 114
       Legend.Alignment = laTop
       Legend.Title.Alignment = taCenter
       Legend.Title.Text.Strings = (
@@ -208,9 +221,10 @@ object MainForm: TMainForm
         'TChart')
       Title.Visible = False
       View3D = False
-      Align = alTop
+      Align = alClient
       TabOrder = 2
-      ExplicitTop = 8
+      ExplicitTop = 466
+      ExplicitHeight = 273
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
       object OrientX: TFastLineSeries
@@ -263,7 +277,7 @@ object MainForm: TMainForm
     OnPose = Myo1Pose
     OnRssi = Myo1Rssi
     OnUnpair = Myo1Unpair
-    Left = 224
-    Top = 136
+    Left = 32
+    Top = 272
   end
 end

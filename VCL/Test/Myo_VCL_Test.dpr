@@ -9,6 +9,7 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
+  Application.Title := 'Myo for Delphi VCL';
   Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.

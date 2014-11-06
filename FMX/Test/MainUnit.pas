@@ -6,7 +6,8 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, Myo,
   FMX.StdCtrls, FMX.Layouts, FMX.Objects, FMXTee.Engine, FMXTee.Series,
-  FMXTee.Procs, FMXTee.Chart, DateUtils;
+  FMXTee.Procs, FMXTee.Chart, DateUtils, System.Math.Vectors, FMX.Types3D,
+  FMX.MaterialSources, FMX.Controls3D, FMX.Objects3D, FMX.Viewport3D;
 
 type
   TMainForm = class(TForm)
@@ -33,7 +34,12 @@ type
     LiveCharts: TCheckBox;
     CBLegends: TCheckBox;
     Text2: TText;
-    LTimerPerSec: TText;
+    LTimesPerSec: TText;
+    TextPose: TText;
+    Viewport3D1: TViewport3D;
+    Cone1: TCone;
+    Light1: TLight;
+    LightMaterialSource1: TLightMaterialSource;
     procedure BConnectClick(Sender: TObject);
     procedure BVibrateClick(Sender: TObject);
     procedure Myo1Connect(Sender: TMyo; const Time: UInt64;
@@ -47,14 +53,14 @@ type
     procedure Myo1Unpair(Sender: TMyo; const Time: UInt64);
     procedure Myo1Pose(Sender: TMyo; const Time: UInt64; const Pose: TPose);
     procedure Myo1Rssi(Sender: TMyo; const Time: UInt64; const Rssi: Byte);
-    procedure Myo1Accelerometer(Sender: TMyo; const Time: UInt64;
-      const Accelerometer: TVector3);
-    procedure Myo1Gyroscope(Sender: TMyo; const Time: UInt64;
-      const Gyroscope: TVector3);
     procedure Myo1Orientation(Sender: TMyo; const Time: UInt64;
-      const Orientation: TOrientation);
+      const Orientation: TVector3D);
     procedure FormCreate(Sender: TObject);
     procedure CBLegendsChange(Sender: TObject);
+    procedure Myo1Gyroscope(Sender: TMyo; const Time: UInt64;
+      const Gyroscope: TPoint3D);
+    procedure Myo1Accelerometer(Sender: TMyo; const Time: UInt64;
+      const Accelerometer: TPoint3D);
   private
     { Private declarations }
 
@@ -64,6 +70,9 @@ type
     TimeSize : TDateTime;
 
     StopRun : Boolean;
+
+  protected
+     procedure DoIdle; virtual;
   public
     { Public declarations }
   end;
@@ -87,28 +96,30 @@ begin
   Chart3.Legend.Visible:=CBLegends.IsChecked;
 end;
 
+procedure TMainForm.DoIdle;
+begin
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
+
+  procedure HorizAxisDateTime(const AChart:TChart; DateTime:Boolean);
+  var t : Integer;
+  begin
+    for t := 0 to AChart.SeriesCount-1 do
+        AChart[t].XValues.DateTime:=DateTime;
+
+    if DateTime then
+       AChart.Axes.Bottom.DateTimeFormat:='hh:nn:ss.z';
+  end;
+
 const
   MinutesPerDay = 24*60;
 begin
   TimeSize:=1/(2*MinutesPerDay);
 
-  AccelX.XValues.DateTime:=True;
-  AccelY.XValues.DateTime:=True;
-  AccelZ.XValues.DateTime:=True;
-
-  GyroX.XValues.DateTime:=True;
-  GyroY.XValues.DateTime:=True;
-  GyroZ.XValues.DateTime:=True;
-
-  OrientX.XValues.DateTime:=True;
-  OrientY.XValues.DateTime:=True;
-  OrientZ.XValues.DateTime:=True;
-  OrientW.XValues.DateTime:=True;
-
-  Chart1.Axes.Bottom.DateTimeFormat:='hh:nn:ss.z';
-  Chart2.Axes.Bottom.DateTimeFormat:='hh:nn:ss.z';
-  Chart3.Axes.Bottom.DateTimeFormat:='hh:nn:ss.z';
+  HorizAxisDateTime(Chart1,True);
+  HorizAxisDateTime(Chart2,True);
+  HorizAxisDateTime(Chart3,True);
 end;
 
 procedure TMainForm.BConnectClick(Sender: TObject);
@@ -124,20 +135,26 @@ begin
   begin
     Myo1.Active:=True;
 
+    {$IFDEF MSWINDOWS}
     StopRun:=False;
 
     repeat
         // In each iteration of our main loop, we run the Myo event loop for a set number of milliseconds.
-        // In this case, we wish to update our display 20 times a second, so we run for 1000/20 milliseconds.
+        // In this case, we wish to update our display 50 times a second, so we run for 1000/20 milliseconds.
         Myo1.Run(1000 div 50);
+
+        DoIdle;
+
         Application.ProcessMessages;
 
     until StopRun or Application.Terminated;
+
+    {$ENDIF}
   end;
 end;
 
 procedure TMainForm.Myo1Accelerometer(Sender: TMyo; const Time: UInt64;
-  const Accelerometer: TVector3);
+  const Accelerometer: TPoint3D);
 var tmp : TDateTime;
 begin
   if LiveCharts.IsChecked then
@@ -190,7 +207,7 @@ begin
 end;
 
 procedure TMainForm.Myo1Gyroscope(Sender: TMyo; const Time: UInt64;
-  const Gyroscope: TVector3);
+  const Gyroscope: TPoint3D);
 var tmp : TDateTime;
 begin
   if LiveCharts.IsChecked then
@@ -203,17 +220,19 @@ begin
 
     GyroX.GetHorizAxis.SetMinMax(tmp-TimeSize,tmp);
   end;
+
+  //Cone1.RotationAngle.Point:=Gyroscope;
 end;
 
 procedure TMainForm.Myo1Orientation(Sender: TMyo; const Time: UInt64;
-  const Orientation: TOrientation);
+  const Orientation: TVector3D);
 var tmp : TDateTime;
 begin
   Inc(Counter);
 
   if TeeTickCount-LastTime>1000 then
   begin
-    LTimerPerSec.Text:=IntToStr(Counter)+' per sec.';
+    LTimesPerSec.Text:=IntToStr(Counter)+' per sec.';
     Counter:=0;
     LastTime:=TeeTickCount;
   end;
@@ -229,6 +248,8 @@ begin
 
     OrientX.GetHorizAxis.SetMinMax(tmp-TimeSize,tmp);
   end;
+
+  Cone1.RotationAngle.Point:=Myo1.Orientation(Orientation);
 end;
 
 procedure TMainForm.Myo1Pair(Sender: TMyo; const Time: UInt64;
@@ -239,8 +260,23 @@ end;
 
 procedure TMainForm.Myo1Pose(Sender: TMyo; const Time: UInt64;
   const Pose: TPose);
+
+  function PoseToString(const APose:TPose):String;
+  begin
+    case Pose of
+      TPose.Rest:       result:='Rest';
+      TPose.Fist:       result:='Fist';
+      TPose.WaveIn:     result:='Wave In';
+      TPose.WaveOut:    result:='Wave Out';
+   TPose.FingersSpread: result:='Fingers Spread';
+      TPose.Reserved1:  result:='Reserved 1';
+    TPose.ThumbToPinky: result:='Thumb to Pinky';
+      TPose.Unknown:    result:='Unknown';
+    end;
+  end;
+
 begin
-  //
+  TextPose.Text:=PoseToString(Pose);
 end;
 
 procedure TMainForm.Myo1Rssi(Sender: TMyo; const Time: UInt64;

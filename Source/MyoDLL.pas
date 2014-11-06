@@ -2,6 +2,8 @@
 // david@steema.com
 unit MyoDLL;
 
+{$MINENUMSIZE 4}
+
 interface
 
 const Myo_DLL =
@@ -245,14 +247,12 @@ function libmyo_event_get_pose(event:libmyo_event_t):libmyo_pose_t; cdecl; exter
 /// Valid for libmyo_event_rssi events only.
 function libmyo_event_get_rssi(event:libmyo_event_t):int8_t; cdecl; external Myo_DLL;
 
-{$MINENUMSIZE 4}
 /// Return type for event handlers.
 type
   libmyo_handler_result_t = (
     libmyo_handler_continue, ///< Continue processing events
     libmyo_handler_stop     ///< Stop processing events
   );
-{$MINENUMSIZE 1}
 
 /// Callback function type to handle events as they occur from libmyo_run().
 type

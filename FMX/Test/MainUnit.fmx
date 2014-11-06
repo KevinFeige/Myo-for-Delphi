@@ -10,24 +10,30 @@ object MainForm: TMainForm
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
-  DesignerMasterStyle = 0
+  DesignerMasterStyle = 3
   object Layout1: TLayout
     Align = Left
-    Size.Width = 108.000000000000000000
+    Size.Width = 118.000000000000000000
     Size.Height = 480.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
     object BVibrate: TButton
       Enabled = False
-      Position.X = 17.000000000000000000
-      Position.Y = 48.000000000000000000
+      Position.X = 9.000000000000000000
+      Position.Y = 44.000000000000000000
+      Size.Width = 89.000000000000000000
+      Size.Height = 34.000000000000000000
+      Size.PlatformDefault = False
       TabOrder = 1
       Text = 'Vibrate'
       OnClick = BVibrateClick
     end
     object BConnect: TButton
-      Position.X = 17.000000000000000000
-      Position.Y = 16.000000000000000000
+      Position.X = 8.000000000000000000
+      Position.Y = 9.000000000000000000
+      Size.Width = 91.000000000000000000
+      Size.Height = 29.000000000000000000
+      Size.PlatformDefault = False
       TabOrder = 0
       Text = 'Connect'
       OnClick = BConnectClick
@@ -38,13 +44,15 @@ object MainForm: TMainForm
       Size.Width = 89.000000000000000000
       Size.Height = 19.000000000000000000
       Size.PlatformDefault = False
+      TextSettings.WordWrap = False
     end
     object LArm: TLabel
-      Position.X = 8.000000000000000000
+      Position.X = 5.000000000000000000
       Position.Y = 168.000000000000000000
-      Size.Width = 89.000000000000000000
+      Size.Width = 111.000000000000000000
       Size.Height = 17.000000000000000000
       Size.PlatformDefault = False
+      TextSettings.WordWrap = False
       Text = 'Arm: Unknown'
     end
     object LPaired: TLabel
@@ -55,9 +63,9 @@ object MainForm: TMainForm
       Size.PlatformDefault = False
     end
     object LiveCharts: TCheckBox
-      Position.X = 7.000000000000000000
+      Position.X = 5.000000000000000000
       Position.Y = 232.000000000000000000
-      Size.Width = 98.000000000000000000
+      Size.Width = 110.000000000000000000
       Size.Height = 19.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 2
@@ -65,7 +73,7 @@ object MainForm: TMainForm
     end
     object CBLegends: TCheckBox
       IsChecked = True
-      Position.X = 8.000000000000000000
+      Position.X = 5.000000000000000000
       Position.Y = 256.000000000000000000
       Size.Width = 92.000000000000000000
       Size.Height = 19.000000000000000000
@@ -81,18 +89,59 @@ object MainForm: TMainForm
       Size.Height = 17.000000000000000000
       Size.PlatformDefault = False
       Text = 'Version:'
+      TextSettings.WordWrap = False
     end
-    object LTimerPerSec: TText
-      Position.X = 9.000000000000000000
+    object LTimesPerSec: TText
+      Position.X = 8.000000000000000000
       Position.Y = 312.000000000000000000
-      Size.Width = 90.000000000000000000
+      Size.Width = 103.000000000000000000
       Size.Height = 25.000000000000000000
       Size.PlatformDefault = False
+      TextSettings.WordWrap = False
+    end
+    object TextPose: TText
+      Position.X = 5.000000000000000000
+      Position.Y = 188.000000000000000000
+      Size.Width = 97.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.WordWrap = False
+    end
+    object Viewport3D1: TViewport3D
+      Align = Bottom
+      Color = claWheat
+      Position.Y = 380.000000000000000000
+      Size.Width = 118.000000000000000000
+      Size.Height = 100.000000000000000000
+      Size.PlatformDefault = False
+      object Cone1: TCone
+        Scale.X = 7.000000000000000000
+        Scale.Y = 7.000000000000000000
+        Scale.Z = 7.000000000000000000
+        Width = 1.000000000000000000
+        Height = 1.000000000000000000
+        Depth = 1.000000000000000000
+        TwoSide = True
+        SubdivisionsAxes = 16
+        SubdivisionsCap = 3
+        MaterialSource = LightMaterialSource1
+      end
+      object Light1: TLight
+        Color = claWhite
+        LightType = Directional
+        SpotCutOff = 180.000000000000000000
+        Position.X = -4.000000000000000000
+        Position.Y = -4.000000000000000000
+        Position.Z = -4.000000000000000000
+        Width = 1.000000000000000000
+        Height = 1.000000000000000000
+        Depth = 1.000000000000000000
+      end
     end
   end
   object Layout2: TLayout
     Align = Client
-    Size.Width = 625.000000000000000000
+    Size.Width = 615.000000000000000000
     Size.Height = 480.000000000000000000
     Size.PlatformDefault = False
     object Chart1: TChart
@@ -100,17 +149,19 @@ object MainForm: TMainForm
       Legend.Title.Alignment = taCenter
       Legend.Title.Text.Strings = (
         'Accelerometer')
+      Legend.Title.Visible = False
+      Legend.Transparent = True
+      Title.Alignment = taLeftJustify
       Title.Text.Strings = (
-        'TChart')
-      Title.Visible = False
+        'Accelerometer')
       BottomAxis.DateTimeFormat = 'M/d/yyyy'
       View3D = False
       Zoom.Brush.Kind = None
       Zoom.Pen.Fill.Color = claSilver
       Align = Client
       TabOrder = 7
-      Size.Width = 625.000000000000000000
-      Size.Height = 56.000000000000000000
+      Size.Width = 615.000000000000000000
+      Size.Height = 96.000000000000000000
       Size.PlatformDefault = False
       ColorPaletteIndex = 13
       object AccelX: TFastLineSeries
@@ -146,21 +197,20 @@ object MainForm: TMainForm
       end
     end
     object Chart2: TChart
-      Position.Y = 56.000000000000000000
+      Position.Y = 96.000000000000000000
       Legend.Alignment = laTop
       Legend.Title.Alignment = taCenter
-      Legend.Title.Text.Strings = (
-        'Gyroscope')
+      Legend.Transparent = True
+      Title.Alignment = taLeftJustify
       Title.Text.Strings = (
-        'TChart')
-      Title.Visible = False
+        'Gyroscope')
       View3D = False
       Zoom.Brush.Kind = None
       Zoom.Pen.Fill.Color = claSilver
       Align = Bottom
       TabOrder = 6
-      Size.Width = 625.000000000000000000
-      Size.Height = 232.000000000000000000
+      Size.Width = 615.000000000000000000
+      Size.Height = 192.000000000000000000
       Size.PlatformDefault = False
       ColorPaletteIndex = 13
       object GyroX: TFastLineSeries
@@ -198,17 +248,16 @@ object MainForm: TMainForm
       Position.Y = 288.000000000000000000
       Legend.Alignment = laTop
       Legend.Title.Alignment = taCenter
-      Legend.Title.Text.Strings = (
-        'Orientation')
+      Legend.Transparent = True
+      Title.Alignment = taLeftJustify
       Title.Text.Strings = (
-        'TChart')
-      Title.Visible = False
+        'Orientation')
       View3D = False
       Zoom.Brush.Kind = None
       Zoom.Pen.Fill.Color = claSilver
       Align = Bottom
       TabOrder = 5
-      Size.Width = 625.000000000000000000
+      Size.Width = 615.000000000000000000
       Size.Height = 192.000000000000000000
       Size.PlatformDefault = False
       ColorPaletteIndex = 13
@@ -254,6 +303,15 @@ object MainForm: TMainForm
       end
     end
   end
+  object LightMaterialSource1: TLightMaterialSource
+    Diffuse = claPaleturquoise
+    Ambient = xFF202020
+    Emissive = claNull
+    Specular = xFF606060
+    Shininess = 30
+    Left = 48
+    Top = 368
+  end
   object Myo1: TMyo
     OnAccelerometer = Myo1Accelerometer
     OnArmLost = Myo1ArmLost
@@ -266,7 +324,7 @@ object MainForm: TMainForm
     OnPose = Myo1Pose
     OnRssi = Myo1Rssi
     OnUnpair = Myo1Unpair
-    Left = 184
-    Top = 16
+    Left = 40
+    Top = 112
   end
 end

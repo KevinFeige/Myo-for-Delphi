@@ -119,6 +119,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="Myo.dcr"/>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="Myo.dcp"/>
         <DCCReference Include="MyoRegister.pas"/>
