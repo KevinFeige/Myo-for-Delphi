@@ -7,7 +7,7 @@ unit MyoDLL;
 interface
 
 const Myo_DLL =
-{$IFDEF MACOSX}
+{$IFDEF MACOS}
   'myo~.86'
 {$ELSE}
 {$IFDEF CPUX86}
@@ -44,13 +44,16 @@ type
 
 /// Return a null-terminated string with a detailed error message.
 
-function libmyo_error_cstring(details:libmyo_error_details_t):PAnsiChar; cdecl; external Myo_DLL;
+function libmyo_error_cstring(details:libmyo_error_details_t):PAnsiChar; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_error_cstring'{$ENDIF};
 
 /// Returns the kind of error that occurred.
-function libmyo_error_kind(details:libmyo_error_details_t):libmyo_result_t; cdecl; external Myo_DLL;
+function libmyo_error_kind(details:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_error_kind'{$ENDIF};
 
 /// Free the resources allocated by an error object.
-procedure libmyo_free_error_details(details:libmyo_error_details_t); cdecl; external Myo_DLL;
+procedure libmyo_free_error_details(details:libmyo_error_details_t); cdecl;
+          external Myo_DLL {$IFDEF MACOS}name '_libmyo_free_error_details'{$ENDIF};
 
 /// @}
 
@@ -70,13 +73,15 @@ procedure libmyo_free_error_details(details:libmyo_error_details_t); cdecl; exte
 ///  - libmyo_error_invalid_argument if \a application_identifier is longer than 255 characters
 ///  - libmyo_error_invalid_argument if \a application_identifier is not in the proper reverse domain name format
 function libmyo_init_hub(out out_hub:libmyo_hub_t; const application_identifier:PAnsiChar;
-                         var out_error:libmyo_error_details_t):libmyo_result_t; cdecl; external Myo_DLL;
+                         var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+                         external Myo_DLL {$IFDEF MACOS}name '_libmyo_init_hub'{$ENDIF};
 
 /// Free the resources allocated to a hub.
 /// @returns libmyo_success if shutdown is successful, otherwise:
 ///  - libmyo_error_invalid_argument if \a hub is NULL
 ///  - libmyo_error if \a hub is not a valid \a hub
-function libmyo_shutdown_hub(hub:libmyo_hub_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl; external Myo_DLL;
+function libmyo_shutdown_hub(hub:libmyo_hub_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_shutdown_hub'{$ENDIF};
 
 /// @}
 
@@ -99,13 +104,15 @@ type
 /// Can be called when a Myo is paired.
 /// @returns libmyo_success if the Myo successfully vibrated, otherwise
 ///  - libmyo_error_invalid_argument if \a myo is NULL
-function libmyo_vibrate(myo:libmyo_myo_t; vibration:libmyo_vibration_type_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl; external Myo_DLL;
+function libmyo_vibrate(myo:libmyo_myo_t; vibration:libmyo_vibration_type_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_vibrate'{$ENDIF};
 
 /// Request the RSSI for a given myo.
 /// Can be called when a Myo is paired. A libmyo_event_rssi event will likely be generated with the value of the RSSI.
 /// @returns libmyo_success if the Myo successfully got the RSSI, otherwise
 ///  - libmyo_error_invalid_argument if \a myo is NULL
-function libmyo_request_rssi(myo:libmyo_myo_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl; external Myo_DLL;
+function libmyo_request_rssi(myo:libmyo_myo_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_request_rssi'{$ENDIF};
 
 /// @}
 
@@ -164,14 +171,17 @@ type
   libmyo_event_t = Pointer;
 
 /// Retrieve the type of an event.
-function libmyo_event_get_type(event:libmyo_event_t):libmyo_event_type_t; cdecl; external Myo_DLL;
+function libmyo_event_get_type(event:libmyo_event_t):libmyo_event_type_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_type'{$ENDIF};
 
 /// Retrieve the timestamp of an event.
 /// @see libmyo_now() for details on timestamps.
-function libmyo_event_get_timestamp(event:libmyo_event_t):UInt64; cdecl; external Myo_DLL;
+function libmyo_event_get_timestamp(event:libmyo_event_t):UInt64; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_timestamp'{$ENDIF};
 
 /// Retrieve the Myo associated with an event.
-function libmyo_event_get_myo(event:libmyo_event_t):libmyo_myo_t; cdecl; external Myo_DLL;
+function libmyo_event_get_myo(event:libmyo_event_t):libmyo_myo_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_myo'{$ENDIF};
 
 /// Components of version.
 type
@@ -191,7 +201,8 @@ type
 
 /// Retrieve the Myo armband's firmware version from this event.
 /// Valid for libmyo_event_paired and libmyo_event_connected events.
-function libmyo_event_get_firmware_version(event:libmyo_event_t; version:libmyo_version_component_t):UInt32; cdecl; external Myo_DLL;
+function libmyo_event_get_firmware_version(event:libmyo_event_t; version:libmyo_version_component_t):UInt32; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_firmware_version'{$ENDIF};
 
 /// Enumeration identifying a right arm or left arm. @see libmyo_event_get_arm().
 type
@@ -203,7 +214,8 @@ type
 
 /// Retrieve the arm associated with an event.
 /// Valid for libmyo_event_arm_recognized events only.
-function libmyo_event_get_arm(event:libmyo_event_t):libmyo_arm_t; cdecl; external Myo_DLL;
+function libmyo_event_get_arm(event:libmyo_event_t):libmyo_arm_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_arm'{$ENDIF};
 
 /// Possible directions for Myo's +x axis relative to a user's arm.
 type
@@ -216,7 +228,8 @@ type
 /// Retrieve the x-direction associated with an event.
 /// The x-direction specifies which way Myo's +x axis is pointing relative to the user's arm.
 /// Valid for libmyo_event_arm_recognized events only.
-function libmyo_event_get_x_direction(event:libmyo_event_t):libmyo_x_direction_t; cdecl; external Myo_DLL;
+function libmyo_event_get_x_direction(event:libmyo_event_t):libmyo_x_direction_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_x_direction'{$ENDIF};
 
 /// Index into orientation data, which is provided as a quaternion.
 /// Orientation data is returned as a unit quaternion of floats, represented as `w + x * i + y * j + z * k`.
@@ -231,25 +244,30 @@ type
 /// Retrieve orientation data associated with an event.
 /// Valid for libmyo_event_orientation events only.
 /// @see libmyo_orientation_index
-function libmyo_event_get_orientation(event:libmyo_event_t; index:libmyo_orientation_index):float; cdecl; external Myo_DLL;
+function libmyo_event_get_orientation(event:libmyo_event_t; index:libmyo_orientation_index):float; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_orientation'{$ENDIF};
 
 /// Retrieve raw accelerometer data associated with an event in units of g.
 /// Valid for libmyo_event_orientation events only.
 /// Requires `index < 3`.
-function libmyo_event_get_accelerometer(event:libmyo_event_t; index:UInt32):float; cdecl; external Myo_DLL;
+function libmyo_event_get_accelerometer(event:libmyo_event_t; index:UInt32):float; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_accelerometer'{$ENDIF};
 
 /// Retrieve raw gyroscope data associated with an event in units of deg/s.
 /// Valid for libmyo_event_orientation events only.
 /// Requires `index < 3`.
-function libmyo_event_get_gyroscope(event:libmyo_event_t; index:UInt32):float; cdecl; external Myo_DLL;
+function libmyo_event_get_gyroscope(event:libmyo_event_t; index:UInt32):float; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_gyroscope'{$ENDIF};
 
 /// Retrieve the pose associated with an event.
 /// Valid for libmyo_event_pose events only.
-function libmyo_event_get_pose(event:libmyo_event_t):libmyo_pose_t; cdecl; external Myo_DLL;
+function libmyo_event_get_pose(event:libmyo_event_t):libmyo_pose_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_pose'{$ENDIF};
 
 /// Retreive the RSSI associated with an event.
 /// Valid for libmyo_event_rssi events only.
-function libmyo_event_get_rssi(event:libmyo_event_t):int8_t; cdecl; external Myo_DLL;
+function libmyo_event_get_rssi(event:libmyo_event_t):int8_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_rssi'{$ENDIF};
 
 /// Return type for event handlers.
 type
@@ -270,7 +288,8 @@ type
 ///  - libmyo_error_invalid_argument if \a handler is NULL
 function libmyo_run(hub:libmyo_hub_t; duration_ms:UInt32; handler:plibmyo_handler_t;
                            user_data:Pointer;
-                           var out_error:libmyo_error_details_t):libmyo_result_t; cdecl; external Myo_DLL;
+                           var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+                           external Myo_DLL {$IFDEF MACOS}name '_libmyo_run'{$ENDIF};
 
 
 implementation
