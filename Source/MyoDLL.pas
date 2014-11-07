@@ -7,11 +7,15 @@ unit MyoDLL;
 interface
 
 const Myo_DLL =
+{$IFDEF MACOSX}
+  'myo~.86'
+{$ELSE}
 {$IFDEF CPUX86}
   'myo32.dll'
 {$ELSE}
 {$IFDEF CPUX64}
   'myo64.dll'
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
   ;

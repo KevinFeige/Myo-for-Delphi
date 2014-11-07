@@ -223,8 +223,6 @@ object MainForm: TMainForm
       View3D = False
       Align = alClient
       TabOrder = 2
-      ExplicitTop = 466
-      ExplicitHeight = 273
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
       object OrientX: TFastLineSeries

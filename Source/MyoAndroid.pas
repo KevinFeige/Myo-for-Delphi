@@ -1729,13 +1729,13 @@ implementation
 
 procedure RegisterTypes;
 begin
-  TRegTypes.RegisterType('MyoAndroid.JAsyncTask', TypeInfo(JAsyncTask));
-  TRegTypes.RegisterType('MyoAndroid.JAsyncTask_Status', TypeInfo(JAsyncTask_Status));
-  TRegTypes.RegisterType('MyoAndroid.JPair', TypeInfo(JPair));
-  TRegTypes.RegisterType('MyoAndroid.JProgressBar', TypeInfo(JProgressBar));
-  TRegTypes.RegisterType('MyoAndroid.JAbstractDeviceListener', TypeInfo(JAbstractDeviceListener));
-  TRegTypes.RegisterType('MyoAndroid.JArm', TypeInfo(JArm));
-  TRegTypes.RegisterType('MyoAndroid.JArm_1', TypeInfo(JArm_1));
+  TRegTypes.RegisterType('MyoAndroid.JAsyncTask', TypeInfo(MyoAndroid.JAsyncTask));
+  TRegTypes.RegisterType('MyoAndroid.JAsyncTask_Status', TypeInfo(MyoAndroid.JAsyncTask_Status));
+  TRegTypes.RegisterType('MyoAndroid.JPair', TypeInfo(MyoAndroid.JPair));
+  TRegTypes.RegisterType('MyoAndroid.JProgressBar', TypeInfo(MyoAndroid.JProgressBar));
+  TRegTypes.RegisterType('MyoAndroid.JAbstractDeviceListener', TypeInfo(MyoAndroid.JAbstractDeviceListener));
+  TRegTypes.RegisterType('MyoAndroid.JArm', TypeInfo(MyoAndroid.JArm));
+  TRegTypes.RegisterType('MyoAndroid.JArm_1', TypeInfo(MyoAndroid.JArm_1));
   TRegTypes.RegisterType('MyoAndroid.Jmyo_BuildConfig', TypeInfo(MyoAndroid.Jmyo_BuildConfig));
   TRegTypes.RegisterType('MyoAndroid.JClassifierEvent', TypeInfo(MyoAndroid.JClassifierEvent));
   TRegTypes.RegisterType('MyoAndroid.JClassifierEvent_ClassifierEventFormat', TypeInfo(MyoAndroid.JClassifierEvent_ClassifierEventFormat));

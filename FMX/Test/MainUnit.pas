@@ -40,6 +40,7 @@ type
     Cone1: TCone;
     Light1: TLight;
     LightMaterialSource1: TLightMaterialSource;
+    BSignal: TButton;
     procedure BConnectClick(Sender: TObject);
     procedure BVibrateClick(Sender: TObject);
     procedure Myo1Connect(Sender: TMyo; const Time: UInt64;
@@ -61,6 +62,8 @@ type
       const Gyroscope: TPoint3D);
     procedure Myo1Accelerometer(Sender: TMyo; const Time: UInt64;
       const Accelerometer: TPoint3D);
+    procedure BSignalClick(Sender: TObject);
+    procedure LiveChartsChange(Sender: TObject);
   private
     { Private declarations }
 
@@ -71,6 +74,7 @@ type
 
     StopRun : Boolean;
 
+    procedure DoDisconnect;
   protected
      procedure DoIdle; virtual;
   public
@@ -117,9 +121,38 @@ const
 begin
   TimeSize:=1/(2*MinutesPerDay);
 
+  {$IFDEF ANDROID}
+  Chart1.Visible:=False;
+  Chart2.Visible:=False;
+  Chart3.Visible:=False;
+  {$ENDIF}
+
   HorizAxisDateTime(Chart1,True);
   HorizAxisDateTime(Chart2,True);
   HorizAxisDateTime(Chart3,True);
+end;
+
+procedure TMainForm.LiveChartsChange(Sender: TObject);
+begin
+  {$IFDEF ANDROID}
+  Chart1.Visible:=True;
+  Chart2.Visible:=True;
+  Chart3.Visible:=True;
+  {$ENDIF}
+end;
+
+procedure TMainForm.DoDisconnect;
+begin
+  BConnect.Text:='Connect';
+  BConnect.Enabled:=True;
+
+  BVibrate.Enabled:=False;
+  Text1.Text:='';
+
+  LArm.Text:='Arm: Unknown';
+  TextPose.Text:='';
+
+  StopRun:=True;
 end;
 
 procedure TMainForm.BConnectClick(Sender: TObject);
@@ -148,6 +181,9 @@ begin
         Application.ProcessMessages;
 
     until StopRun or Application.Terminated;
+
+    if not Application.Terminated then
+       DoDisconnect;
 
     {$ENDIF}
   end;
@@ -197,13 +233,7 @@ end;
 
 procedure TMainForm.Myo1Disconnect(Sender: TMyo; const Time: UInt64);
 begin
-  BConnect.Text:='Connect';
-  BConnect.Enabled:=True;
-
-  BVibrate.Enabled:=False;
-  Text1.Text:='';
-
-  StopRun:=True;
+  DoDisconnect;
 end;
 
 procedure TMainForm.Myo1Gyroscope(Sender: TMyo; const Time: UInt64;
@@ -282,12 +312,17 @@ end;
 procedure TMainForm.Myo1Rssi(Sender: TMyo; const Time: UInt64;
   const Rssi: Byte);
 begin
-  //
+  BSignal.Text:=Rssi.ToString;
 end;
 
 procedure TMainForm.Myo1Unpair(Sender: TMyo; const Time: UInt64);
 begin
   LPaired.Text:='Unpaired';
+end;
+
+procedure TMainForm.BSignalClick(Sender: TObject);
+begin
+  Myo1.RequestRSSI;
 end;
 
 end.

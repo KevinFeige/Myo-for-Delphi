@@ -39,18 +39,18 @@ object MainForm: TMainForm
       OnClick = BConnectClick
     end
     object Text1: TText
-      Position.X = 8.000000000000000000
+      Position.X = 5.000000000000000000
       Position.Y = 111.000000000000000000
-      Size.Width = 89.000000000000000000
-      Size.Height = 19.000000000000000000
+      Size.Width = 98.000000000000000000
+      Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       TextSettings.WordWrap = False
     end
     object LArm: TLabel
       Position.X = 5.000000000000000000
-      Position.Y = 168.000000000000000000
+      Position.Y = 163.000000000000000000
       Size.Width = 111.000000000000000000
-      Size.Height = 17.000000000000000000
+      Size.Height = 23.000000000000000000
       Size.PlatformDefault = False
       TextSettings.WordWrap = False
       Text = 'Arm: Unknown'
@@ -70,6 +70,7 @@ object MainForm: TMainForm
       Size.PlatformDefault = False
       TabOrder = 2
       Text = 'Live Charts'
+      OnChange = LiveChartsChange
     end
     object CBLegends: TCheckBox
       IsChecked = True
@@ -102,8 +103,8 @@ object MainForm: TMainForm
     object TextPose: TText
       Position.X = 5.000000000000000000
       Position.Y = 188.000000000000000000
-      Size.Width = 97.000000000000000000
-      Size.Height = 17.000000000000000000
+      Size.Width = 103.000000000000000000
+      Size.Height = 25.000000000000000000
       Size.PlatformDefault = False
       TextSettings.WordWrap = False
     end
@@ -137,6 +138,16 @@ object MainForm: TMainForm
         Height = 1.000000000000000000
         Depth = 1.000000000000000000
       end
+    end
+    object BSignal: TButton
+      Position.X = 8.000000000000000000
+      Position.Y = 344.000000000000000000
+      Size.Width = 99.000000000000000000
+      Size.Height = 29.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 4
+      Text = 'Signal'
+      OnClick = BSignalClick
     end
   end
   object Layout2: TLayout

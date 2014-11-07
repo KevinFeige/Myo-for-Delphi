@@ -15,8 +15,11 @@ uses
   {$IFDEF MSWINDOWS}
   ,MyoDLL
   {$ENDIF}
+  {$IFDEF MACOS}
+  ,MyoDLL
+  {$ENDIF}
   {$IFDEF ANDROID}
-  ,Androidapi.JNIBridge, MyoAndroid
+  ,Androidapi.JNIBridge, Androidapi.JNI.JavaTypes, MyoAndroid
   {$ENDIF}
   ;
 
@@ -93,7 +96,7 @@ type
   {$IFDEF ANDROID}
   private
     type
-      TJDeviceListener = class(TJavaLocal, JDeviceListener)
+      TListener = class(TJavaLocal, JDeviceListener)
       private
         [Weak]FMyo : TMyo;
       public
@@ -113,7 +116,7 @@ type
   private
     FActive : Boolean;
 
-    {$IFDEF MSWINDOWS}
+    {$IFNDEF ANDROID}
     FError : Pointer;
     {$ENDIF}
 
@@ -121,7 +124,7 @@ type
     FMyo : {$IFDEF ANDROID}JMyo{$ELSE}libmyo_myo_t{$ENDIF};
 
     {$IFDEF ANDROID}
-    FListener : TJDeviceListener;
+    FListener : TListener;
     {$ENDIF}
 
     FArm : TArm;
@@ -144,11 +147,12 @@ type
     FOnPose : TPoseEvent;
     FOnRssi : TRssiEvent;
 
-    IIdentifier : {$IFDEF MSWINDOWS}AnsiString{$ELSE}String{$ENDIF};
+    IIdentifier : {$IFDEF ANDROID}JString{$ELSE}{$IFDEF MSWINDOWS}AnsiString{$ELSE}String{$ENDIF}{$ENDIF};
 
     procedure CheckMyo;
+    function GetMyoName:String;
 
-    {$IFDEF MSWINDOWS}
+    {$IFNDEF ANDROID}
     procedure DeviceEvent(event:libmyo_event_t);
     procedure WaitForMyo(const ATimeoutMsec:Integer=10000);
     {$ENDIF}
@@ -167,16 +171,12 @@ type
     procedure Disconnect;
 
     function Orientation(const AOrientation:TVector3D):TPoint3D;
-
     procedure RequestRSSI;
-
-    {$IFDEF MSWINDOWS}
     procedure Run(const Duration:Integer; const OnlyOnce:Boolean=False);
-    {$ENDIF}
-
     procedure Vibrate(const AType:TVibrationType);
 
     property Arm:TArm read FArm default TArm.Unknown;
+    property MyoName:String read GetMyoName;
     property XDirection:TXDirection read FXDirection default TXDirection.Unknown;
   published
     property Active:Boolean read FActive write SetActive default False;
@@ -204,10 +204,11 @@ uses
   {$ENDIF}
   {$IFDEF ANDROID}
   ,Androidapi.Helpers, Androidapi.JNI.GraphicsContentViewText
+  ,Androidapi.JNI.Bluetooth
   {$ENDIF}
   ;
 
-{$IFDEF MSWINDOWS}
+{$IFNDEF ANDROID}
 procedure CheckError(const AError:Pointer);
 var tmp : String;
 begin
@@ -239,7 +240,6 @@ end;
 Constructor TMyo.Create(AOwner:TComponent);
 begin
   inherited;
-
   FHub:=TJHub.JavaClass.getInstance;
 end;
 {$ENDIF}
@@ -253,9 +253,10 @@ begin
     begin
       FHub.removeListener(FListener);
       FListener.Free;
+
+      FHub.shutdown;
     end;
 
-    FHub.shutdown;
     FHub:=nil;
 
     {$ELSE}
@@ -273,13 +274,24 @@ var tmpContext : JContext;
 {$ENDIF}
 begin
   {$IFDEF ANDROID}
-  tmpContext:=SharedActivityContext {.getApplicationContext};
+  tmpContext:=SharedActivityContext;
 
-  if not FHub.init(tmpContext,tmpContext.getPackageName) then
+  if not TJBluetoothAdapter.JavaClass.getDefaultAdapter.isEnabled then
+     raise EMyoException.Create('Error Bluetooh is not enabled.');
+
+  if FIdentifier='' then
+     IIdentifier:=tmpContext.getPackageName
+  else
+     IIdentifier:=StringToJString(FIdentifier);
+
+  if not FHub.init(tmpContext,IIdentifier) then
      raise EMyoException.Create('Error Myo not paired or connected.');
 
-  FListener:=TJDeviceListener.Create;
-  FListener.FMyo:=Self;
+  if not Assigned(FListener) then
+  begin
+    FListener:=TListener.Create;
+    FListener.FMyo:=Self;
+  end;
 
   FHub.addListener(FListener);
 
@@ -306,6 +318,13 @@ procedure TMyo.CheckMyo;
 begin
   if not Assigned(FMyo) then
      raise EMyoException.Create('Error Myo not paired or connected.');
+end;
+
+function TMyo.GetMyoName:String;
+begin
+  CheckMyo;
+
+  result:={$IFDEF ANDROID}JStringToString(FMyo.getName){$ELSE}''{$ENDIF};
 end;
 
 procedure TMyo.RequestRSSI;
@@ -347,7 +366,7 @@ begin
   {$ENDIF}
 end;
 
-{$IFDEF MSWINDOWS}
+{$IFNDEF ANDROID}
 type
   TMyoHandler=function(user_data:Pointer; event:libmyo_event_t):libmyo_handler_result_t;
 
@@ -362,19 +381,23 @@ begin
   TMyo(user_data).DeviceEvent(event);
   result:=libmyo_handler_stop;
 end;
+{$ENDIF}
 
 procedure TMyo.Run(const Duration: Integer; const OnlyOnce:Boolean=False);
 begin
   CheckMyo;
 
+  {$IFDEF ANDROID}
+  //FHub.run;
+  {$ELSE}
   if OnlyOnce then
      libmyo_run(FHub, Duration, @HandlerStop, Self, FError)
   else
      libmyo_run(FHub, Duration, @HandlerContinue, Self, FError);
 
   CheckError(FError);
+  {$ENDIF}
 end;
-{$ENDIF}
 
 procedure TMyo.SetActive(const Value: Boolean);
 begin
@@ -384,7 +407,7 @@ begin
      Disconnect;
 end;
 
-{$IFDEF MSWINDOWS}
+{$IFNDEF ANDROID}
 function HandlerWait(user_data:Pointer; event:libmyo_event_t):libmyo_handler_result_t; cdecl;
 begin
   if libmyo_event_get_type(event) = libmyo_event_paired then
@@ -574,7 +597,7 @@ begin
 end;
 
 {$IFDEF ANDROID}
-procedure TMyo.TJDeviceListener.onAccelerometerData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
+procedure TMyo.TListener.onAccelerometerData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
 
   function GetAccelerometer:TPoint3D;
   begin
@@ -588,16 +611,16 @@ begin
      FMyo.FOnAccelerometer(FMyo, P2, GetAccelerometer);
 end;
 
-procedure TMyo.TJDeviceListener.onArmLost(P1: JMyo; P2: Int64); cdecl;
+procedure TMyo.TListener.onArmLost(P1: JMyo; P2: Int64); cdecl;
 begin
-  FArm:=TArm.Unknown;
-  FXDirection:=TXDirection.Unknown;
+  FMyo.FArm:=TArm.Unknown;
+  FMyo.FXDirection:=TXDirection.Unknown;
 
   if Assigned(FMyo.FOnArmLost) then
      FMyo.FOnArmLost(FMyo, P2);
 end;
 
-procedure TMyo.TJDeviceListener.onArmRecognized(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
+procedure TMyo.TListener.onArmRecognized(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
 
   function GetArm:TArm;
   begin
@@ -622,24 +645,24 @@ procedure TMyo.TJDeviceListener.onArmRecognized(P1: JMyo; P2: Int64; P3: JArm; P
   end;
 
 begin
-  FArm:=GetArm;
-  FXDirection:=GetXDirection;
+  FMyo.FArm:=GetArm;
+  FMyo.FXDirection:=GetXDirection;
 
   if Assigned(FMyo.FOnArm) then
-     FMyo.FOnArm(FMyo, P2, FArm, FXDirection);
+     FMyo.FOnArm(FMyo, P2, FMyo.FArm, FMyo.FXDirection);
 end;
 
-procedure TMyo.TJDeviceListener.onConnect(P1: JMyo; P2: Int64); cdecl;
+procedure TMyo.TListener.onConnect(P1: JMyo; P2: Int64); cdecl;
 begin
   FMyo.FMyo:=P1;
 end;
 
-procedure TMyo.TJDeviceListener.onDisconnect(P1: JMyo; P2: Int64); cdecl;
+procedure TMyo.TListener.onDisconnect(P1: JMyo; P2: Int64); cdecl;
 begin
   FMyo.FMyo:=nil;
 end;
 
-procedure TMyo.TJDeviceListener.onGyroscopeData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
+procedure TMyo.TListener.onGyroscopeData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
 
   function GetGyroscope:TPoint3D;
   begin
@@ -653,7 +676,7 @@ begin
      FMyo.FOnGyroscope(FMyo, P2, GetGyroscope);
 end;
 
-procedure TMyo.TJDeviceListener.onOrientationData(P1: JMyo; P2: Int64; P3: JQuaternion); cdecl;
+procedure TMyo.TListener.onOrientationData(P1: JMyo; P2: Int64; P3: JQuaternion); cdecl;
 
   function GetOrientation:TVector3D;
   begin
@@ -668,7 +691,7 @@ begin
      FMyo.FOnOrientation(FMyo, P2, GetOrientation);
 end;
 
-procedure TMyo.TJDeviceListener.onPair(P1: JMyo; P2: Int64); cdecl;
+procedure TMyo.TListener.onPair(P1: JMyo; P2: Int64); cdecl;
 
   function GetVersion:TFirmwareVersion;
   begin
@@ -684,7 +707,7 @@ begin
      FMyo.FOnPair(FMyo, P2, GetVersion);
 end;
 
-procedure TMyo.TJDeviceListener.onPose(P1: JMyo; P2: Int64; P3: JPose); cdecl;
+procedure TMyo.TListener.onPose(P1: JMyo; P2: Int64; P3: JPose); cdecl;
 
   function GetPose:TPose;
   begin
@@ -715,7 +738,7 @@ begin
      FMyo.FOnPose(FMyo, P2, GetPose);
 end;
 
-procedure TMyo.TJDeviceListener.onRssi(P1: JMyo; P2: Int64; P3: Integer); cdecl;
+procedure TMyo.TListener.onRssi(P1: JMyo; P2: Int64; P3: Integer); cdecl;
 begin
   if Assigned(FMyo.FOnRssi) then
      FMyo.FOnRssi(FMyo, P2, P3);

@@ -68,6 +68,8 @@ type
     TimeSize : TDateTime;
 
     StopRun : Boolean;
+
+    procedure DoDisconnect;
   public
     { Public declarations }
   end;
@@ -101,7 +103,25 @@ begin
         Application.ProcessMessages;
 
     until StopRun or Application.Terminated;
+
+    if not Application.Terminated then
+       DoDisconnect;
   end;
+end;
+
+procedure TMainForm.DoDisconnect;
+begin
+  BConnect.Caption:='Connect';
+  BConnect.Enabled:=True;
+
+  BVibrate.Enabled:=False;
+  LVersion.Caption:='';
+
+  LArm.Caption:='Arm: Unknown';
+  LPose.Caption:='';
+  LTimesPerSec.Caption:='';
+
+  StopRun:=True;
 end;
 
 procedure TMainForm.BSignalClick(Sender: TObject);
@@ -189,15 +209,7 @@ end;
 
 procedure TMainForm.Myo1Disconnect(Sender: TMyo; const Time: UInt64);
 begin
-  BConnect.Caption:='Connect';
-  BConnect.Enabled:=True;
-
-  BVibrate.Enabled:=False;
-  LVersion.Caption:='';
-  LPose.Caption:='';
-  LTimesPerSec.Caption:='';
-
-  StopRun:=True;
+  DoDisconnect;
 end;
 
 procedure TMainForm.Myo1Gyroscope(Sender: TMyo; const Time: UInt64;
