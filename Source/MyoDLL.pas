@@ -44,7 +44,7 @@ type
 
 /// Return a null-terminated string with a detailed error message.
 
-function libmyo_error_cstring(details:libmyo_error_details_t):PAnsiChar; cdecl;
+function libmyo_error_cstring(details:libmyo_error_details_t):{$IFDEF MACOS}MarshaledAString{$ELSE}PAnsiChar{$ENDIF}; cdecl;
          external Myo_DLL {$IFDEF MACOS}name '_libmyo_error_cstring'{$ENDIF};
 
 /// Returns the kind of error that occurred.
@@ -72,7 +72,8 @@ procedure libmyo_free_error_details(details:libmyo_error_details_t); cdecl;
 ///  - libmyo_error_invalid_argument if \a out_hub is NULL
 ///  - libmyo_error_invalid_argument if \a application_identifier is longer than 255 characters
 ///  - libmyo_error_invalid_argument if \a application_identifier is not in the proper reverse domain name format
-function libmyo_init_hub(out out_hub:libmyo_hub_t; const application_identifier:PAnsiChar;
+function libmyo_init_hub(out out_hub:libmyo_hub_t;
+                         const application_identifier:{$IFDEF MACOS}MarshaledAString{$ELSE}PAnsiChar{$ENDIF};
                          var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
                          external Myo_DLL {$IFDEF MACOS}name '_libmyo_init_hub'{$ENDIF};
 

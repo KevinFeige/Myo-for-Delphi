@@ -272,6 +272,9 @@ procedure TMyo.Connect(AIdentifier:String=''; const ATimeoutMsec:Integer=10000);
 {$IFDEF ANDROID}
 var tmpContext : JContext;
 {$ENDIF}
+{$IFDEF MACOS}
+var M : TMarshaller;
+{$ENDIF}
 begin
   {$IFDEF ANDROID}
   tmpContext:=SharedActivityContext;
@@ -305,7 +308,13 @@ begin
   else
      IIdentifier:={$IFDEF MSWINDOWS}AnsiString{$ENDIF}(FIdentifier);
 
+  {$IFDEF MSWINDOWS}
   if libmyo_init_hub(FHub, PAnsiChar(IIdentifier), FError) <> libmyo_success then
+  {$ELSE}
+  {$IFDEF MACOS}
+  if libmyo_init_hub(FHub, M.AsAnsi(IIdentifier).ToPointer, FError) <> libmyo_success then
+  {$ENDIF}
+  {$ENDIF}
      CheckError(FError);
 
   waitForMyo(ATimeoutMsec);
