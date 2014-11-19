@@ -35,7 +35,7 @@ type
     CBLegends: TCheckBox;
     Text2: TText;
     LTimesPerSec: TText;
-    TextPose: TText;
+    LPose: TText;
     Viewport3D1: TViewport3D;
     Cone1: TCone;
     Light1: TLight;
@@ -46,9 +46,6 @@ type
     procedure Myo1Connect(Sender: TMyo; const Time: UInt64;
       const Version: TFirmwareVersion);
     procedure Myo1Disconnect(Sender: TMyo; const Time: UInt64);
-    procedure Myo1ArmRecognized(Sender: TMyo; const Time: UInt64;
-      const Arm: TArm; const XDirection: TXDirection);
-    procedure Myo1ArmLost(Sender: TMyo; const Time: UInt64);
     procedure Myo1Pair(Sender: TMyo; const Time: UInt64;
       const Version: TFirmwareVersion);
     procedure Myo1Unpair(Sender: TMyo; const Time: UInt64);
@@ -64,12 +61,14 @@ type
       const Accelerometer: TPoint3D);
     procedure BSignalClick(Sender: TObject);
     procedure LiveChartsChange(Sender: TObject);
+    procedure Myo1ArmUnsynchronized(Sender: TMyo; const Time: UInt64);
+    procedure Myo1ArmSynchronized(Sender: TMyo; const Time: UInt64;
+      const Arm: TArm; const XDirection: TXDirection);
   private
     { Private declarations }
 
     Counter : Integer;
     LastTime: Single;
-
     TimeSize : TDateTime;
 
     StopRun : Boolean;
@@ -150,9 +149,7 @@ begin
   Text1.Text:='';
 
   LArm.Text:='Arm: Unknown';
-  TextPose.Text:='';
-
-  StopRun:=True;
+  LPose.Text:='';
 end;
 
 procedure TMainForm.BConnectClick(Sender: TObject);
@@ -160,24 +157,27 @@ begin
   BConnect.Enabled:=False;
 
   if Myo1.Active then
-  begin
-    Myo1.Active:=False;
-    StopRun:=True;
-  end
+     Myo1.Active:=False
   else
   begin
-    Myo1.Active:=True;
+    try
+      Myo1.Active:=True;
+    except
+      on Exception do
+      begin
+        BConnect.Enabled:=True;
+        raise;
+      end;
+    end;
 
-    {$IFDEF MSWINDOWS}
+    // Thread version: Myo1.Run;
+
     StopRun:=False;
 
     repeat
         // In each iteration of our main loop, we run the Myo event loop for a set number of milliseconds.
-        // In this case, we wish to update our display 50 times a second, so we run for 1000/20 milliseconds.
+        // In this case, we wish to update our display 20 times a second, so we run for 1000/20 milliseconds.
         Myo1.Run(1000 div 50);
-
-        DoIdle;
-
         Application.ProcessMessages;
 
     until StopRun or Application.Terminated;
@@ -185,7 +185,6 @@ begin
     if not Application.Terminated then
        DoDisconnect;
 
-    {$ENDIF}
   end;
 end;
 
@@ -205,12 +204,7 @@ begin
   end;
 end;
 
-procedure TMainForm.Myo1ArmLost(Sender: TMyo; const Time: UInt64);
-begin
-  LArm.Text:='Arm: Unknown';
-end;
-
-procedure TMainForm.Myo1ArmRecognized(Sender: TMyo; const Time: UInt64;
+procedure TMainForm.Myo1ArmSynchronized(Sender: TMyo; const Time: UInt64;
   const Arm: TArm; const XDirection: TXDirection);
 begin
   case Arm of
@@ -219,6 +213,13 @@ begin
   else
     LArm.Text:='Arm: Unknown';
   end;
+end;
+
+procedure TMainForm.Myo1ArmUnsynchronized(Sender: TMyo; const Time: UInt64);
+begin
+  LArm.Text:='Arm: Unknown';
+  LPose.Text:='';
+  LTimesPerSec.Text:='';
 end;
 
 procedure TMainForm.Myo1Connect(Sender: TMyo; const Time: UInt64;
@@ -306,7 +307,7 @@ procedure TMainForm.Myo1Pose(Sender: TMyo; const Time: UInt64;
   end;
 
 begin
-  TextPose.Text:=PoseToString(Pose);
+  LPose.Text:=PoseToString(Pose);
 end;
 
 procedure TMainForm.Myo1Rssi(Sender: TMyo; const Time: UInt64;

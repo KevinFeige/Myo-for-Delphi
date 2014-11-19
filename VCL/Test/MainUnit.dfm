@@ -1,7 +1,7 @@
 object MainForm: TMainForm
   Left = 0
   Top = 0
-  Caption = 'Myo for Delphi'
+  Caption = 'Myo for Delphi VCL'
   ClientHeight = 475
   ClientWidth = 722
   Color = clBtnFace
@@ -83,7 +83,7 @@ object MainForm: TMainForm
     end
     object CBLegends: TCheckBox
       Left = 16
-      Top = 240
+      Top = 224
       Width = 97
       Height = 17
       Caption = '&Legends'
@@ -94,7 +94,7 @@ object MainForm: TMainForm
     end
     object LiveCharts: TCheckBox
       Left = 16
-      Top = 217
+      Top = 201
       Width = 97
       Height = 17
       Caption = 'Live Charts'
@@ -108,6 +108,15 @@ object MainForm: TMainForm
       Caption = 'Signal'
       TabOrder = 4
       OnClick = BSignalClick
+    end
+    object CBThin: TCheckBox
+      Left = 16
+      Top = 247
+      Width = 97
+      Height = 17
+      Caption = 'Thin lines'
+      TabOrder = 5
+      OnClick = CBThinClick
     end
   end
   object Panel2: TPanel
@@ -132,6 +141,7 @@ object MainForm: TMainForm
       Title.Visible = False
       View3D = False
       Align = alTop
+      BevelOuter = bvNone
       TabOrder = 0
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
@@ -168,6 +178,8 @@ object MainForm: TMainForm
       Top = 0
       Width = 585
       Height = 193
+      Foot.Text.Strings = (
+        'aaa')
       Legend.Alignment = laTop
       Legend.Title.Alignment = taCenter
       Legend.Title.Text.Strings = (
@@ -177,6 +189,7 @@ object MainForm: TMainForm
       Title.Visible = False
       View3D = False
       Align = alTop
+      BevelOuter = bvNone
       TabOrder = 1
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
@@ -222,6 +235,7 @@ object MainForm: TMainForm
       Title.Visible = False
       View3D = False
       Align = alClient
+      BevelOuter = bvNone
       TabOrder = 2
       DefaultCanvas = 'TGDIPlusCanvas'
       ColorPaletteIndex = 13
@@ -265,8 +279,8 @@ object MainForm: TMainForm
   end
   object Myo1: TMyo
     OnAccelerometer = Myo1Accelerometer
-    OnArmLost = Myo1ArmLost
-    OnArmRecognized = Myo1ArmRecognized
+    OnArmUnsynchronized = Myo1ArmUnsynchronized
+    OnArmSynchronized = Myo1ArmSynchronized
     OnConnect = Myo1Connect
     OnDisconnect = Myo1Disconnect
     OnGyroscope = Myo1Gyroscope

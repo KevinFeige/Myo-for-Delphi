@@ -8,7 +8,16 @@ interface
 
 const Myo_DLL =
 {$IFDEF MACOS}
-  'myo~.86'
+  {$IFDEF IOS}
+
+  // The MyoKit library file should be copied to ie:
+  // $(BDSPLATFORMSDKSDIR)\iPhoneOS7.1.sdk
+
+  '/MyoKit'
+
+  {$ELSE}
+  'myo.86'
+  {$ENDIF}
 {$ELSE}
 {$IFDEF CPUX86}
   'myo32.dll'
@@ -160,8 +169,8 @@ type
     libmyo_event_unpaired, ///< Successfully unpaired from a Myo.
     libmyo_event_connected, ///< A Myo has successfully connected.
     libmyo_event_disconnected, ///< A Myo has been disconnected.
-    libmyo_event_arm_recognized, ///< A Myo has recognized that it is now on an arm.
-    libmyo_event_arm_lost, ///< A Myo has been moved or removed from the arm.
+    libmyo_event_arm_synced, ///< A Myo has recognized that it is now on an arm.
+    libmyo_event_arm_unsynced, ///< A Myo has been moved or removed from the arm.
     libmyo_event_orientation, ///< Orientation data has been received.
     libmyo_event_pose, ///< A change in pose has been detected. @see libmyo_pose_t.
     libmyo_event_rssi ///< An RSSI value has been received.
@@ -214,7 +223,7 @@ type
   );
 
 /// Retrieve the arm associated with an event.
-/// Valid for libmyo_event_arm_recognized events only.
+/// Valid for libmyo_event_arm_synced events only.
 function libmyo_event_get_arm(event:libmyo_event_t):libmyo_arm_t; cdecl;
          external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_arm'{$ENDIF};
 
@@ -228,7 +237,7 @@ type
 
 /// Retrieve the x-direction associated with an event.
 /// The x-direction specifies which way Myo's +x axis is pointing relative to the user's arm.
-/// Valid for libmyo_event_arm_recognized events only.
+/// Valid for libmyo_event_arm_synced events only.
 function libmyo_event_get_x_direction(event:libmyo_event_t):libmyo_x_direction_t; cdecl;
          external Myo_DLL {$IFDEF MACOS}name '_libmyo_event_get_x_direction'{$ENDIF};
 

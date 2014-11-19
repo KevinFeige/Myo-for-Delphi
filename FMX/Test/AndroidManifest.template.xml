@@ -6,7 +6,10 @@
         android:versionName="%versionName%">
 
     <!-- This is the platform API where NativeActivity was introduced. -->
-    <uses-sdk android:minSdkVersion="%minSdkVersion%" android:targetSdkVersion="%targetSdkVersion%" />
+ 
+
+<uses-sdk android:minSdkVersion="18" android:targetSdkVersion="18" />
+
 <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
 
 <%uses-permission%>

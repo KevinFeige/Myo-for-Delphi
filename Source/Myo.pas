@@ -1,5 +1,9 @@
 // Ported to Delphi from C++ by @davidberneda
 // david@steema.com
+//
+// Sources:
+// https://github.com/davidberneda/Myo-for-Delphi
+
 unit Myo;
 {$I TeeDefs.inc}
 
@@ -16,7 +20,11 @@ uses
   ,MyoDLL
   {$ENDIF}
   {$IFDEF MACOS}
-  ,MyoDLL
+    {$IFDEF IOS}
+    ,MyoiOS
+    {$ELSE}
+    ,MyoDLL
+    {$ENDIF}
   {$ENDIF}
   {$IFDEF ANDROID}
   ,Androidapi.JNIBridge, Androidapi.JNI.JavaTypes, MyoAndroid
@@ -73,7 +81,7 @@ type
 
   TMyo = class;
 
-  TArmRecognizedEvent = procedure(Sender:TMyo; const Time:UInt64; const Arm:TArm; const XDirection:TXDirection) of object;
+  TArmEvent = procedure(Sender:TMyo; const Time:UInt64; const Arm:TArm; const XDirection:TXDirection) of object;
   TPairEvent = procedure(Sender:TMyo; const Time:UInt64; const Version:TFirmwareVersion) of object;
   TUnpairEvent = procedure(Sender:TMyo; const Time:UInt64) of object;
 
@@ -99,11 +107,15 @@ type
       TListener = class(TJavaLocal, JDeviceListener)
       private
         [Weak]FMyo : TMyo;
+
+        function GetVersion:TFirmwareVersion;
       public
         procedure onAccelerometerData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
-        procedure onArmLost(P1: JMyo; P2: Int64); cdecl;
-        procedure onArmRecognized(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
+        procedure onAttach(P1: JMyo; P2: Int64); cdecl;
+        procedure onArmUnsync(P1: JMyo; P2: Int64); cdecl;
+        procedure onArmSync(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
         procedure onConnect(P1: JMyo; P2: Int64); cdecl;
+        procedure onDetach(P1: JMyo; P2: Int64); cdecl;
         procedure onDisconnect(P1: JMyo; P2: Int64); cdecl;
         procedure onGyroscopeData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
         procedure onOrientationData(P1: JMyo; P2: Int64; P3: JQuaternion); cdecl;
@@ -120,8 +132,8 @@ type
     FError : Pointer;
     {$ENDIF}
 
-    FHub : {$IFDEF ANDROID}JHub{$ELSE}libmyo_hub_t{$ENDIF};
-    FMyo : {$IFDEF ANDROID}JMyo{$ELSE}libmyo_myo_t{$ENDIF};
+    FHub : {$IFDEF ANDROID}JHub{$ELSE}{$IFDEF IOS}TLMHub{$ELSE}libmyo_hub_t{$ENDIF}{$ENDIF};
+    FMyo : {$IFDEF ANDROID}JMyo{$ELSE}{$IFDEF IOS}TLMMyo{$ELSE}libmyo_myo_t{$ENDIF}{$ENDIF};
 
     {$IFDEF ANDROID}
     FListener : TListener;
@@ -132,12 +144,12 @@ type
 
     FIdentifier : String;
 
-    FOnArm : TArmRecognizedEvent;
+    FOnArmSync : TArmEvent;
 
     FOnConnect,
     FOnPair : TPairEvent;
 
-    FOnArmLost,
+    FOnArmUnsync,
     FOnDisconnect,
     FOnUnpair : TUnpairEvent;
 
@@ -149,10 +161,18 @@ type
 
     IIdentifier : {$IFDEF ANDROID}JString{$ELSE}{$IFDEF MSWINDOWS}AnsiString{$ELSE}String{$ENDIF}{$ENDIF};
 
+    {$IFDEF MSWINDOWS}
+    IStopRun : Boolean;
+    IThread : TThread;
+    {$ENDIF}
+
     procedure CheckMyo;
     function GetMyoName:String;
+    procedure InnerRun(const Duration: Integer; const OnlyOnce:Boolean=False);
 
-    {$IFNDEF ANDROID}
+    {$IFDEF ANDROID}
+    function GetMyoFirmware:String;
+    {$ELSE}
     procedure DeviceEvent(event:libmyo_event_t);
     procedure WaitForMyo(const ATimeoutMsec:Integer=10000);
     {$ENDIF}
@@ -168,14 +188,20 @@ type
     Destructor Destroy; override;
 
     procedure Connect(AIdentifier:String=''; const ATimeoutMsec:Integer=10000);
-    procedure Disconnect;
+    procedure Disconnect(const ATime:Int64=0);
 
     function Orientation(const AOrientation:TVector3D):TPoint3D;
     procedure RequestRSSI;
-    procedure Run(const Duration:Integer; const OnlyOnce:Boolean=False);
+    procedure Run; overload;
+    procedure Run(const Duration:Integer; const OnlyOnce:Boolean=False); overload;
     procedure Vibrate(const AType:TVibrationType);
 
     property Arm:TArm read FArm default TArm.Unknown;
+
+    {$IFDEF ANDROID}
+    property Firmware:String read GetMyoFirmware;
+    {$ENDIF}
+
     property MyoName:String read GetMyoName;
     property XDirection:TXDirection read FXDirection default TXDirection.Unknown;
   published
@@ -183,8 +209,8 @@ type
     property Identifier:String read FIdentifier write FIdentifier;
 
     property OnAccelerometer:TAccelerometerEvent read FOnAccelerometer write FOnAccelerometer;
-    property OnArmLost:TUnpairEvent read FOnArmLost write FOnArmLost;
-    property OnArmRecognized:TArmRecognizedEvent read FOnArm write FOnArm;
+    property OnArmUnsynchronized:TUnpairEvent read FOnArmUnsync write FOnArmUnsync;
+    property OnArmSynchronized:TArmEvent read FOnArmSync write FOnArmSync;
     property OnConnect:TPairEvent read FOnConnect write FOnConnect;
     property OnDisconnect:TUnpairEvent read FOnDisconnect write FOnDisconnect;
     property OnGyroscope : TGyroscopeEvent read FOnGyroscope write FOnGyroscope;
@@ -201,6 +227,15 @@ uses
   Math
   {$IFDEF MSWINDOWS}
   ,AnsiStrings
+
+  (*
+  {$IFDEF FMX}
+  ,FMX.Forms
+  {$ELSE}
+  ,VCL.Forms
+  {$ENDIF}
+  *)
+
   {$ENDIF}
   {$IFDEF ANDROID}
   ,Androidapi.Helpers, Androidapi.JNI.GraphicsContentViewText
@@ -209,6 +244,7 @@ uses
   ;
 
 {$IFNDEF ANDROID}
+{$IFNDEF IOS}
 procedure CheckError(const AError:Pointer);
 var tmp : String;
 begin
@@ -233,6 +269,7 @@ begin
   end;
 end;
 {$ENDIF}
+{$ENDIF}
 
 { TMyo }
 
@@ -242,10 +279,27 @@ begin
   inherited;
   FHub:=TJHub.JavaClass.getInstance;
 end;
+
+function TMyo.GetMyoFirmware:String;
+begin
+  CheckMyo;
+
+  result:=JStringToString(FMyo.getFirmwareVersionString);
+end;
 {$ENDIF}
 
 Destructor TMyo.Destroy;
 begin
+  {$IFDEF MSWINDOWS}
+  IStopRun:=True;
+
+  if Assigned(IThread) then
+  begin
+    IThread.Terminate;
+    IThread:=nil;
+  end;
+  {$ENDIF}
+
   if FHub<>nil then
   begin
     {$IFDEF ANDROID}
@@ -279,16 +333,19 @@ begin
   {$IFDEF ANDROID}
   tmpContext:=SharedActivityContext;
 
-  if not TJBluetoothAdapter.JavaClass.getDefaultAdapter.isEnabled then
-     raise EMyoException.Create('Error Bluetooh is not enabled.');
+//  if not TJBluetoothAdapter.JavaClass.getDefaultAdapter.isEnabled then
+//     raise EMyoException.Create('Error Bluetooh is not enabled.');
 
   if FIdentifier='' then
      IIdentifier:=tmpContext.getPackageName
   else
      IIdentifier:=StringToJString(FIdentifier);
 
-  if not FHub.init(tmpContext,IIdentifier) then
-     raise EMyoException.Create('Error Myo not paired or connected.');
+  //TThread.Queue(nil,procedure
+  //  begin
+      if not FHub.init(tmpContext,IIdentifier) then
+         raise EMyoException.Create('Error Myo not paired or connected.');
+  //  end);
 
   if not Assigned(FListener) then
   begin
@@ -298,7 +355,7 @@ begin
 
   FHub.addListener(FListener);
 
-  FHub.pairWithAnyMyo;
+  FHub.attachToAdjacentMyo; // pairWithAnyMyo;
 
   FActive:=True;
 
@@ -392,20 +449,54 @@ begin
 end;
 {$ENDIF}
 
+procedure TMyo.Run;
+begin
+  {$IFDEF MSWINDOWS}
+  CheckMyo;
+
+  IThread:=TThread.CreateAnonymousThread(procedure
+  begin
+    IStopRun:=False;
+
+    repeat
+      IThread.Synchronize(IThread,procedure
+         begin
+           InnerRun(1000 div 50);
+         end);
+
+    until (not Assigned(IThread)) or IThread.Finished or IStopRun {or Application.Terminated};
+
+    //if not Application.Terminated then
+       Disconnect;
+  end);
+
+  IThread.Start;
+  {$ENDIF}
+end;
+
+procedure TMyo.InnerRun(const Duration: Integer; const OnlyOnce:Boolean=False);
+begin
+  {$IFDEF MSWINDOWS}
+  if not IStopRun then
+  {$ENDIF}
+  begin
+    {$IFDEF ANDROID}
+    //FHub.run;
+    {$ELSE}
+    if OnlyOnce then
+       libmyo_run(FHub, Duration, @HandlerStop, Self, FError)
+    else
+       libmyo_run(FHub, Duration, @HandlerContinue, Self, FError);
+
+    CheckError(FError);
+    {$ENDIF}
+  end;
+end;
+
 procedure TMyo.Run(const Duration: Integer; const OnlyOnce:Boolean=False);
 begin
   CheckMyo;
-
-  {$IFDEF ANDROID}
-  //FHub.run;
-  {$ELSE}
-  if OnlyOnce then
-     libmyo_run(FHub, Duration, @HandlerStop, Self, FError)
-  else
-     libmyo_run(FHub, Duration, @HandlerContinue, Self, FError);
-
-  CheckError(FError);
-  {$ENDIF}
+  InnerRun(Duration,OnlyOnce);
 end;
 
 procedure TMyo.SetActive(const Value: Boolean);
@@ -417,6 +508,7 @@ begin
 end;
 
 {$IFNDEF ANDROID}
+{$IFNDEF IOS}
 function HandlerWait(user_data:Pointer; event:libmyo_event_t):libmyo_handler_result_t; cdecl;
 begin
   if libmyo_event_get_type(event) = libmyo_event_paired then
@@ -515,7 +607,7 @@ begin
 
       libmyo_event_unpaired:
         begin
-          Disconnect;
+          Disconnect(time);
 
           if Assigned(FOnUnpair) then
              FOnUnpair(Myo, time);
@@ -529,30 +621,24 @@ begin
              FOnConnect(Myo, time, GetVersion);
         end;
 
-      libmyo_event_disconnected:
-        begin
-          Disconnect;
+      libmyo_event_disconnected: Disconnect(time);
 
-          if Assigned(FOnDisconnect) then
-             FOnDisconnect(Myo, time);
-        end;
-
-      libmyo_event_arm_recognized:
+      libmyo_event_arm_synced:
          begin
            FArm:=GetArm;
            FXDirection:=GetXDirection;
 
-           if Assigned(FOnArm) then
-              FOnArm(Myo, time, FArm, FXDirection);
+           if Assigned(FOnArmSync) then
+              FOnArmSync(Myo, time, FArm, FXDirection);
          end;
 
-      libmyo_event_arm_lost:
+      libmyo_event_arm_unsynced:
          begin
            FArm:=TArm.Unknown;
            FXDirection:=TXDirection.Unknown;
 
-           if Assigned(FOnArmLost) then
-              FOnArmLost(Myo, time);
+           if Assigned(FOnArmUnsync) then
+              FOnArmUnsync(Myo, time);
          end;
 
       libmyo_event_orientation:
@@ -577,14 +663,28 @@ begin
   end;
 end;
 {$ENDIF}
+{$ENDIF}
 
-procedure TMyo.Disconnect;
+procedure TMyo.Disconnect(const ATime:Int64=0);
 begin
   FActive:=False;
   FMyo:=nil;
 
   FArm:=TArm.Unknown;
   FXDirection:=TXDirection.Unknown;
+
+  {$IFDEF MSWINDOWS}
+  IStopRun:=True;
+
+  if Assigned(IThread) then
+  begin
+    IThread.Terminate;
+    IThread:=nil;
+  end;
+  {$ENDIF}
+
+  if Assigned(FOnDisconnect) then
+     FOnDisconnect(Self, ATime);
 end;
 
 function TMyo.Orientation(const AOrientation: TVector3D): TPoint3D;
@@ -606,6 +706,17 @@ begin
 end;
 
 {$IFDEF ANDROID}
+function TMyo.TListener.GetVersion:TFirmwareVersion;
+begin
+  // FMyo.getFirmwareVersionString ?
+
+  // Problem: How to obtain JFirmwareVersion here?
+  result.Major:=0;
+  result.Minor:=0;
+  result.Patch:=0;
+  result.Hardware:=0;
+end;
+
 procedure TMyo.TListener.onAccelerometerData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
 
   function GetAccelerometer:TPoint3D;
@@ -620,16 +731,21 @@ begin
      FMyo.FOnAccelerometer(FMyo, P2, GetAccelerometer);
 end;
 
-procedure TMyo.TListener.onArmLost(P1: JMyo; P2: Int64); cdecl;
+procedure TMyo.TListener.onAttach(P1: JMyo; P2: Int64); cdecl;
+begin
+  onConnect(P1,P2);
+end;
+
+procedure TMyo.TListener.onArmUnsync(P1: JMyo; P2: Int64); cdecl;
 begin
   FMyo.FArm:=TArm.Unknown;
   FMyo.FXDirection:=TXDirection.Unknown;
 
-  if Assigned(FMyo.FOnArmLost) then
-     FMyo.FOnArmLost(FMyo, P2);
+  if Assigned(FMyo.FOnArmUnsync) then
+     FMyo.FOnArmUnsync(FMyo, P2);
 end;
 
-procedure TMyo.TListener.onArmRecognized(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
+procedure TMyo.TListener.onArmSync(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
 
   function GetArm:TArm;
   begin
@@ -657,17 +773,27 @@ begin
   FMyo.FArm:=GetArm;
   FMyo.FXDirection:=GetXDirection;
 
-  if Assigned(FMyo.FOnArm) then
-     FMyo.FOnArm(FMyo, P2, FMyo.FArm, FMyo.FXDirection);
+  if Assigned(FMyo.FOnArmSync) then
+     FMyo.FOnArmSync(FMyo, P2, FMyo.FArm, FMyo.FXDirection);
 end;
 
 procedure TMyo.TListener.onConnect(P1: JMyo; P2: Int64); cdecl;
 begin
   FMyo.FMyo:=P1;
+  FMyo.FActive:=True;
+
+  if Assigned(FMyo.FOnConnect) then
+     FMyo.FOnConnect(FMyo, P2, GetVersion);
+end;
+
+procedure TMyo.TListener.onDetach(P1: JMyo; P2: Int64); cdecl;
+begin
+  onDisconnect(P1,P2);
 end;
 
 procedure TMyo.TListener.onDisconnect(P1: JMyo; P2: Int64); cdecl;
 begin
+  FMyo.Disconnect(P2);
   FMyo.FMyo:=nil;
 end;
 
@@ -701,16 +827,6 @@ begin
 end;
 
 procedure TMyo.TListener.onPair(P1: JMyo; P2: Int64); cdecl;
-
-  function GetVersion:TFirmwareVersion;
-  begin
-    // Problem: How to obtain JFirmwareVersion here?
-    result.Major:=0;
-    result.Minor:=0;
-    result.Patch:=0;
-    result.Hardware:=0;
-  end;
-
 begin
   if Assigned(FMyo.FOnPair) then
      FMyo.FOnPair(FMyo, P2, GetVersion);
@@ -756,20 +872,19 @@ end;
 
 {$IFDEF D11}
 function TQuaternionHelper.Angles:TPoint3D;
-
-  function ToDegrees(const Angle:Single):Single;
-  const
-    TwoPi = 2*Pi;
-  begin
-    result:=360*(Angle+Pi/TwoPi);
-  end;
-
+const
+  TwoPi = 2.0*Pi;
 begin
  // From Myo Windows SDK, hello-myo.cpp sample:
 
- result.X:=ToDegrees( ArcTan2(2*(W*X+Y*Z),1-2*(X*X+Y*Y)) );  // Roll
- result.Y:=ToDegrees( ArcSin(Max(-1,Min(1,2*(W*Y-Z*X)))) );  // Pitch
- result.Z:=ToDegrees( ArcTan2(2*(W*Z+X*Y),1-2*(Y*Y+Z*Z)) );  // Yaw
+ result.X:=ArcTan2(2*(W*X+Y*Z),1-2*(X*X+Y*Y));  // Roll
+ result.X:=360*(result.X+Pi)/TwoPi;
+
+ result.Y:=ArcSin(Max(-1,Min(1,2*(W*Y-Z*X))));  // Pitch
+ result.Y:=360*(result.Y+(0.5*Pi))/Pi;
+
+ result.Z:=ArcTan2(2*(W*Z+X*Y),1-2*(Y*Y+Z*Z));  // Yaw
+ result.Z:=360*(result.Z+Pi)/TwoPi;
 end;
 {$ENDIF}
 

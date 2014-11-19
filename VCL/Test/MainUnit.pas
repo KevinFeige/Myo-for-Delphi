@@ -37,15 +37,13 @@ type
     LPose: TLabel;
     LTimesPerSec: TLabel;
     BSignal: TButton;
+    CBThin: TCheckBox;
     procedure Myo1Accelerometer(Sender: TMyo; const Time: UInt64;
       const Accelerometer: TPoint3D);
     procedure BVibrateClick(Sender: TObject);
     procedure CBLegendsClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure BConnectClick(Sender: TObject);
-    procedure Myo1ArmLost(Sender: TMyo; const Time: UInt64);
-    procedure Myo1ArmRecognized(Sender: TMyo; const Time: UInt64;
-      const Arm: TArm; const XDirection: TXDirection);
     procedure Myo1Connect(Sender: TMyo; const Time: UInt64;
       const Version: TFirmwareVersion);
     procedure Myo1Disconnect(Sender: TMyo; const Time: UInt64);
@@ -59,6 +57,10 @@ type
     procedure Myo1Rssi(Sender: TMyo; const Time: UInt64; const Rssi: Byte);
     procedure Myo1Unpair(Sender: TMyo; const Time: UInt64);
     procedure BSignalClick(Sender: TObject);
+    procedure CBThinClick(Sender: TObject);
+    procedure Myo1ArmSynchronized(Sender: TMyo; const Time: UInt64;
+      const Arm: TArm; const XDirection: TXDirection);
+    procedure Myo1ArmUnsynchronized(Sender: TMyo; const Time: UInt64);
   private
     { Private declarations }
 
@@ -92,7 +94,15 @@ begin
   end
   else
   begin
-    Myo1.Active:=True;
+    try
+      Myo1.Active:=True;
+    except
+      on Exception do
+      begin
+        BConnect.Enabled:=True;
+        raise;
+      end;
+    end;
 
     StopRun:=False;
 
@@ -141,6 +151,22 @@ begin
   Chart3.Legend.Visible:=CBLegends.Checked;
 end;
 
+procedure TMainForm.CBThinClick(Sender: TObject);
+
+  procedure Thin(const AChart:TChart);
+  var t : Integer;
+  begin
+    for t := 0 to AChart.SeriesCount-1 do
+        if AChart[t] is TFastLineSeries then
+           TFastLineSeries(AChart[t]).FastPen:=CBThin.Checked;
+  end;
+
+begin
+  Thin(Chart1);
+  Thin(Chart2);
+  Thin(Chart3);
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
 
   procedure HorizAxisDateTime(const AChart:TChart; DateTime:Boolean);
@@ -176,17 +202,13 @@ begin
     AccelZ.AddXY(tmp,Accelerometer.Z);
 
     AccelX.GetHorizAxis.SetMinMax(tmp-TimeSize,tmp);
+
+    Chart1.Foot.Show;
+    Chart1.Foot.Caption:=Accelerometer.Length.ToString;
   end;
 end;
 
-procedure TMainForm.Myo1ArmLost(Sender: TMyo; const Time: UInt64);
-begin
-  LArm.Caption:='Arm: Unknown';
-  LPose.Caption:='';
-  LTimesPerSec.Caption:='';
-end;
-
-procedure TMainForm.Myo1ArmRecognized(Sender: TMyo; const Time: UInt64;
+procedure TMainForm.Myo1ArmSynchronized(Sender: TMyo; const Time: UInt64;
   const Arm: TArm; const XDirection: TXDirection);
 begin
   case Arm of
@@ -195,6 +217,13 @@ begin
   else
     LArm.Caption:='Arm: Unknown';
   end;
+end;
+
+procedure TMainForm.Myo1ArmUnsynchronized(Sender: TMyo; const Time: UInt64);
+begin
+  LArm.Caption:='Arm: Unknown';
+  LPose.Caption:='';
+  LTimesPerSec.Caption:='';
 end;
 
 procedure TMainForm.Myo1Connect(Sender: TMyo; const Time: UInt64;
