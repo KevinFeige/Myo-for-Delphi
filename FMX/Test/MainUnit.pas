@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
-  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, Myo,
+  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, MyoComponent,
   FMX.StdCtrls, FMX.Layouts, FMX.Objects, FMXTee.Engine, FMXTee.Series,
   FMXTee.Procs, FMXTee.Chart, DateUtils, System.Math.Vectors, FMX.Types3D,
   FMX.MaterialSources, FMX.Controls3D, FMX.Objects3D, FMX.Viewport3D;
@@ -300,8 +300,7 @@ procedure TMainForm.Myo1Pose(Sender: TMyo; const Time: UInt64;
       TPose.WaveIn:     result:='Wave In';
       TPose.WaveOut:    result:='Wave Out';
    TPose.FingersSpread: result:='Fingers Spread';
-      TPose.Reserved1:  result:='Reserved 1';
-    TPose.ThumbToPinky: result:='Thumb to Pinky';
+    TPose.DoubleTap:    result:='Double Tap';
       TPose.Unknown:    result:='Unknown';
     end;
   end;

@@ -24,6 +24,8 @@ const Myo_DLL =
 {$ELSE}
 {$IFDEF CPUX64}
   'myo64.dll'
+{$ELSE}
+  'myo32.dll' // Delphi 7
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}
@@ -89,9 +91,24 @@ function libmyo_init_hub(out out_hub:libmyo_hub_t;
 /// Free the resources allocated to a hub.
 /// @returns libmyo_success if shutdown is successful, otherwise:
 ///  - libmyo_error_invalid_argument if \a hub is NULL
-///  - libmyo_error if \a hub is not a valid \a hub
+///  - libmyo_error if \a hub is not a valid hub
 function libmyo_shutdown_hub(hub:libmyo_hub_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
          external Myo_DLL {$IFDEF MACOS}name '_libmyo_shutdown_hub'{$ENDIF};
+
+// Locking policies.
+type
+  libmyo_locking_policy_t = (
+    libmyo_locking_policy_none,    ///< Pose events are always sent.
+    libmyo_locking_policy_standard ///< Pose events are not sent while a Myo is locked.
+    );
+
+/// Set the locking policy for Myos connected to the hub.
+/// @returns libmyo_success if the locking policy is successfully set, otherwise
+///  - libmyo_error_invalid_argument if \a hub is NULL
+///  - libmyo_error if \a hub is not a valid hub
+function libmyo_set_locking_policy(hub:libmyo_hub_t; locking_policy:libmyo_locking_policy_t;
+                                          var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+                                          external Myo_DLL {$IFDEF MACOS}name '_libmyo_set_locking_policy'{$ENDIF}
 
 /// @}
 
@@ -137,28 +154,53 @@ type
     libmyo_pose_wave_in        = 2, ///< User has an open palm rotated towards the posterior of their wrist.
     libmyo_pose_wave_out       = 3, ///< User has an open palm rotated towards the anterior of their wrist.
     libmyo_pose_fingers_spread = 4, ///< User has an open palm with their fingers spread away from each other.
-    libmyo_pose_reserved1      = 5, ///< Reserved value; not a valid pose.
-    libmyo_pose_thumb_to_pinky = 6, ///< User is touching the tip of their thumb to the tip of their pinky.
+    libmyo_pose_double_tap     = 5, ///< User is touching the tip of their thumb to the tip of their pinky.
 
     libmyo_num_poses,               ///< Number of poses supported; not a valid pose.
 
     libmyo_pose_unknown = $ffff    ///< Unknown pose.
   );
 
-const
-  libmyo_trained_poses : Array of libmyo_pose_t =
-   [ libmyo_pose_rest,
-     libmyo_pose_fist,
-     libmyo_pose_wave_in,
-     libmyo_pose_wave_out,
-     libmyo_pose_fingers_spread,
-     libmyo_pose_thumb_to_pinky];
-
-const
-  libmyo_num_trained_poses = SizeOf(libmyo_trained_poses) / SizeOf(libmyo_trained_poses[0]);
-
 /// @}
 
+/// @defgroup libmyo_locking Myo locking mechanism
+
+/// Valid unlock types.
+type
+  libmyo_unlock_type_t = (
+    libmyo_unlock_timed = 0, ///< Unlock for a fixed period of time.
+    libmyo_unlock_hold  = 1 ///< Unlock until explicitly told to re-lock.
+    );
+
+/// Unlock the given Myo.
+/// Can be called when a Myo is paired. A libmyo_event_unlocked event will be generated if the Myo was locked.
+/// @returns libmyo_success if the Myo was successfully unlocked, otherwise
+///  - libmyo_error_invalid_argument if \a myo is NULL
+function libmyo_myo_unlock(myo:libmyo_myo_t; _type:libmyo_unlock_type_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_myo_unlock'{$ENDIF};
+
+/// Lock the given Myo immediately.
+/// Can be called when a Myo is paired. A libmyo_event_locked event will be generated if the Myo was unlocked.
+/// @returns libmyo_success if the Myo was successfully locked, otherwise
+///  - libmyo_error_invalid_argument if \a myo is NULL
+function libmyo_myo_lock(myo:libmyo_myo_t; var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_myo_lock'{$ENDIF};
+
+/// User action types.
+type
+  libmyo_user_action_type_t = (
+    libmyo_user_action_single = 0 ///< User did a single, discrete action, such as pausing a video.
+    );
+
+/// Notify the given Myo that a user action was recognized.
+/// Can be called when a Myo is paired. Will cause Myo to vibrate.
+/// @returns libmyo_success if the Myo was successfully notified, otherwise
+///  - libmyo_error_invalid_argument if \a myo is NULL
+function libmyo_myo_notify_user_action(myo:libmyo_myo_t; _type:libmyo_user_action_type_t;
+                                              var out_error:libmyo_error_details_t):libmyo_result_t; cdecl;
+         external Myo_DLL {$IFDEF MACOS}name '_libmyo_myo_notify_user_action'{$ENDIF};
+
+/// @}
 /// @defgroup libmyo_events Event Handling
 /// @{
 
@@ -169,11 +211,13 @@ type
     libmyo_event_unpaired, ///< Successfully unpaired from a Myo.
     libmyo_event_connected, ///< A Myo has successfully connected.
     libmyo_event_disconnected, ///< A Myo has been disconnected.
-    libmyo_event_arm_synced, ///< A Myo has recognized that it is now on an arm.
+    libmyo_event_arm_synced, ///< A Myo has recognized that the sync gesture has been successfully performed.
     libmyo_event_arm_unsynced, ///< A Myo has been moved or removed from the arm.
     libmyo_event_orientation, ///< Orientation data has been received.
     libmyo_event_pose, ///< A change in pose has been detected. @see libmyo_pose_t.
-    libmyo_event_rssi ///< An RSSI value has been received.
+    libmyo_event_rssi, ///< An RSSI value has been received.
+    libmyo_event_unlocked,         ///< A Myo has become unlocked.
+    libmyo_event_locked           ///< A Myo has become locked.
   );
 
 /// Information about an event.
@@ -208,6 +252,11 @@ type
     libmyo_hardware_rev_c = 1, ///< Alpha units
     libmyo_hardware_rev_d = 2 ///< Consumer units
   );
+
+{$IFNDEF D9}
+type
+  UInt32=Cardinal;
+{$ENDIF}
 
 /// Retrieve the Myo armband's firmware version from this event.
 /// Valid for libmyo_event_paired and libmyo_event_connected events.

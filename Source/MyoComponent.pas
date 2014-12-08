@@ -4,10 +4,12 @@
 // Sources:
 // https://github.com/davidberneda/Myo-for-Delphi
 
-unit Myo;
+unit MyoComponent;
 {$I TeeDefs.inc}
 
+{$IFDEF D17}
 {$SCOPEDENUMS ON}
+{$ENDIF}
 
 interface
 
@@ -40,17 +42,21 @@ type
   {$ENDIF}
 
   TFirmwareVersion = record
+  {$IFDEF D9}
   public
+  {$ENDIF}
     Major,
     Minor,
     Patch,
     Hardware : UInt32;
 
+  {$IFDEF D9}
     function ToString:String;
+  {$ENDIF}
   end;
 
   // Possible directions for Myo's +x axis relative to a user's arm.
-  TXDirection = (Unknown, TowardWrist, TowardElbow);
+  TXDirection = ({$IFDEF D9}Unknown{$ELSE}dirUnknown{$ENDIF}, TowardWrist, TowardElbow);
 
   {$IFNDEF D20}
   TVector3D = record
@@ -71,11 +77,15 @@ type
   end;
   {$ENDIF}
 
+  {$IFNDEF D9}
+  TArm = (armUnknown, armLeft, armRight);
+  {$ELSE}
   TArm = (Unknown,Left,Right);
+  {$ENDIF}
 
   TVibrationType = (Short,Medium,Long);
 
-  TPose = (Rest, Fist, WaveIn, WaveOut, FingersSpread, Reserved1, ThumbToPinky, Unknown);
+  TPose = (Rest, Fist, WaveIn, WaveOut, FingersSpread, DoubleTap, {$IFDEF D9}Unknown{$ELSE}poseUnknown{$ENDIF});
 
   TRssi = Byte;
 
@@ -84,6 +94,8 @@ type
   TArmEvent = procedure(Sender:TMyo; const Time:UInt64; const Arm:TArm; const XDirection:TXDirection) of object;
   TPairEvent = procedure(Sender:TMyo; const Time:UInt64; const Version:TFirmwareVersion) of object;
   TUnpairEvent = procedure(Sender:TMyo; const Time:UInt64) of object;
+
+  TLockEvent = procedure(Sender:TMyo; const Time:UInt64) of object;
 
   TOrientationEvent = procedure(Sender:TMyo; const Time:UInt64; const Orientation:TVector3D) of object;
   TAccelerometerEvent = procedure(Sender:TMyo; const Time:UInt64; const Accelerometer:TPoint3D) of object;
@@ -111,17 +123,18 @@ type
         function GetVersion:TFirmwareVersion;
       public
         procedure onAccelerometerData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
-        procedure onAttach(P1: JMyo; P2: Int64); cdecl;
-        procedure onArmUnsync(P1: JMyo; P2: Int64); cdecl;
         procedure onArmSync(P1: JMyo; P2: Int64; P3: JArm; P4: JXDirection); cdecl;
+        procedure onArmUnsync(P1: JMyo; P2: Int64); cdecl;
+        procedure onAttach(P1: JMyo; P2: Int64); cdecl;
         procedure onConnect(P1: JMyo; P2: Int64); cdecl;
         procedure onDetach(P1: JMyo; P2: Int64); cdecl;
         procedure onDisconnect(P1: JMyo; P2: Int64); cdecl;
         procedure onGyroscopeData(P1: JMyo; P2: Int64; P3: JVector3); cdecl;
+        procedure onLock(P1: JMyo; P2: Int64); cdecl;
         procedure onOrientationData(P1: JMyo; P2: Int64; P3: JQuaternion); cdecl;
-        procedure onPair(P1: JMyo; P2: Int64); cdecl;
         procedure onPose(P1: JMyo; P2: Int64; P3: JPose); cdecl;
         procedure onRssi(P1: JMyo; P2: Int64; P3: Integer); cdecl;
+        procedure onUnlock(P1: JMyo; P2: Int64); cdecl;
       end;
   {$ENDIF}
 
@@ -156,8 +169,10 @@ type
     FOnOrientation : TOrientationEvent;
     FOnAccelerometer : TAccelerometerEvent;
     FOnGyroscope : TGyroscopeEvent;
+    FOnLock : TLockEvent;
     FOnPose : TPoseEvent;
     FOnRssi : TRssiEvent;
+    FOnUnlock : TLockEvent;
 
     IIdentifier : {$IFDEF ANDROID}JString{$ELSE}{$IFDEF MSWINDOWS}AnsiString{$ELSE}String{$ENDIF}{$ENDIF};
 
@@ -178,6 +193,7 @@ type
     {$ENDIF}
 
     procedure SetActive(const Value:Boolean);
+    procedure SetArmUnknown;
   protected
     property Myo:{$IFDEF ANDROID}JMyo{$ELSE}libmyo_myo_t{$ENDIF} read FMyo;
   public
@@ -194,16 +210,19 @@ type
     procedure RequestRSSI;
     procedure Run; overload;
     procedure Run(const Duration:Integer; const OnlyOnce:Boolean=False); overload;
+
+    class function Version(const AVersion:TFirmwareVersion):String;
+
     procedure Vibrate(const AType:TVibrationType);
 
-    property Arm:TArm read FArm default TArm.Unknown;
+    property Arm:TArm read FArm default {$IFDEF D9}TArm.Unknown{$ELSE}armUnknown{$ENDIF};
 
     {$IFDEF ANDROID}
     property Firmware:String read GetMyoFirmware;
     {$ENDIF}
 
     property MyoName:String read GetMyoName;
-    property XDirection:TXDirection read FXDirection default TXDirection.Unknown;
+    property XDirection:TXDirection read FXDirection default {$IFDEF D9}TXDirection.Unknown{$ELSE}dirUnknown{$ENDIF};
   published
     property Active:Boolean read FActive write SetActive default False;
     property Identifier:String read FIdentifier write FIdentifier;
@@ -214,10 +233,12 @@ type
     property OnConnect:TPairEvent read FOnConnect write FOnConnect;
     property OnDisconnect:TUnpairEvent read FOnDisconnect write FOnDisconnect;
     property OnGyroscope : TGyroscopeEvent read FOnGyroscope write FOnGyroscope;
+    property OnLock:TLockEvent read FOnLock write FOnLock;
     property OnOrientation : TOrientationEvent read FOnOrientation write FOnOrientation;
     property OnPair:TPairEvent read FOnPair write FOnPair;
     property OnPose:TPoseEvent read FOnPose write FOnPose;
     property OnRssi:TRssiEvent read FOnRssi write FOnRssi;
+    property OnUnlock:TLockEvent read FOnUnlock write FOnUnlock;
     property OnUnpair:TUnpairEvent read FOnUnpair write FOnUnpair;
   end;
 
@@ -226,7 +247,9 @@ implementation
 uses
   Math
   {$IFDEF MSWINDOWS}
+  {$IFDEF D9}
   ,AnsiStrings
+  {$ENDIF}
 
   (*
   {$IFDEF FMX}
@@ -284,7 +307,7 @@ function TMyo.GetMyoFirmware:String;
 begin
   CheckMyo;
 
-  result:=JStringToString(FMyo.getFirmwareVersionString);
+  result:=JStringToString(FMyo.getFirmwareVersion.toString);
 end;
 {$ENDIF}
 
@@ -413,8 +436,8 @@ begin
 
   {$IFDEF MSWINDOWS}
   case AType of
-    TVibrationType.Short: libmyo_vibrate(FMyo,libmyo_vibration_short,FError);
-   TVibrationType.Medium: libmyo_vibrate(FMyo,libmyo_vibration_medium,FError);
+    {$IFDEF D9}TVibrationType.{$ENDIF}Short: libmyo_vibrate(FMyo,libmyo_vibration_short,FError);
+   {$IFDEF D9}TVibrationType.{$ENDIF}Medium: libmyo_vibrate(FMyo,libmyo_vibration_medium,FError);
   else
     libmyo_vibrate(FMyo,libmyo_vibration_long,FError);
   end;
@@ -454,6 +477,7 @@ begin
   {$IFDEF MSWINDOWS}
   CheckMyo;
 
+  {$IFDEF D9}
   IThread:=TThread.CreateAnonymousThread(procedure
   begin
     IStopRun:=False;
@@ -471,6 +495,9 @@ begin
   end);
 
   IThread.Start;
+  {$ELSE}
+  IThread.Resume;
+  {$ENDIF}
   {$ENDIF}
 end;
 
@@ -497,6 +524,13 @@ procedure TMyo.Run(const Duration: Integer; const OnlyOnce:Boolean=False);
 begin
   CheckMyo;
   InnerRun(Duration,OnlyOnce);
+end;
+
+class function TMyo.Version(const AVersion:TFirmwareVersion):String;
+begin
+  with AVersion do
+    result:=IntToStr(Major)+'.'+IntToStr(Minor)+'.'+
+            IntToStr(Patch)+'.'+IntToStr(Hardware);
 end;
 
 procedure TMyo.SetActive(const Value: Boolean);
@@ -564,35 +598,34 @@ procedure TMyo.DeviceEvent(event:libmyo_event_t);
   function GetArm:TArm;
   begin
     case libmyo_event_get_arm(event) of
-      libmyo_arm_right: result:=TArm.Right;
-      libmyo_arm_left: result:=TArm.Left;
+      libmyo_arm_right: result:={$IFDEF D9}TArm.Right{$ELSE}armRight{$ENDIF};
+       libmyo_arm_left: result:={$IFDEF D9}TArm.Left{$ELSE}armLeft{$ENDIF};
     else
-      result:=TArm.Unknown;
+      result:={$IFDEF D9}TArm.Unknown{$ELSE}armUnknown{$ENDIF};
     end;
   end;
 
   function GetXDirection:TXDirection;
   begin
     case libmyo_event_get_x_direction(event) of
-      libmyo_x_direction_toward_wrist: result:=TXDirection.TowardWrist;
-      libmyo_x_direction_toward_elbow: result:=TXDirection.TowardElbow;
+      libmyo_x_direction_toward_wrist: result:={$IFDEF D9}TXDirection.{$ENDIF}TowardWrist;
+      libmyo_x_direction_toward_elbow: result:={$IFDEF D9}TXDirection.{$ENDIF}TowardElbow;
     else
-      result:=TXDirection.Unknown;
+      result:={$IFDEF D9}TXDirection.Unknown{$ELSE}dirUnknown{$ENDIF};
     end;
   end;
 
   function GetPose:TPose;
   begin
     case libmyo_event_get_pose(event) of
-        libmyo_pose_rest: result:=TPose.Rest;
-        libmyo_pose_fist: result:=TPose.Fist;
-        libmyo_pose_wave_in: result:=TPose.WaveIn;
-        libmyo_pose_wave_out: result:=TPose.WaveOut;
-        libmyo_pose_fingers_spread: result:=TPose.FingersSpread;
-        libmyo_pose_reserved1: result:=TPose.Reserved1;
-        libmyo_pose_thumb_to_pinky: result:=TPose.ThumbToPinky;
+          libmyo_pose_rest: result:={$IFDEF D9}TPose.{$ENDIF}Rest;
+          libmyo_pose_fist: result:={$IFDEF D9}TPose.{$ENDIF}Fist;
+       libmyo_pose_wave_in: result:={$IFDEF D9}TPose.{$ENDIF}WaveIn;
+      libmyo_pose_wave_out: result:={$IFDEF D9}TPose.{$ENDIF}WaveOut;
+libmyo_pose_fingers_spread: result:={$IFDEF D9}TPose.{$ENDIF}FingersSpread;
+    libmyo_pose_double_tap: result:={$IFDEF D9}TPose.{$ENDIF}DoubleTap;
     else
-       result:=TPose.Unknown;
+       result:={$IFDEF D9}TPose.Unknown{$ELSE}poseUnknown{$ENDIF};
     end;
   end;
 
@@ -634,8 +667,7 @@ begin
 
       libmyo_event_arm_unsynced:
          begin
-           FArm:=TArm.Unknown;
-           FXDirection:=TXDirection.Unknown;
+           SetArmUnknown;
 
            if Assigned(FOnArmUnsync) then
               FOnArmUnsync(Myo, time);
@@ -660,18 +692,31 @@ begin
       libmyo_event_rssi:
           if Assigned(FOnRssi) then
              FOnRssi(Myo, time, libmyo_event_get_rssi(event));
+
+      libmyo_event_locked:
+          if Assigned(FOnLock) then
+             FOnLock(Myo, time);
+
+      libmyo_event_unlocked:
+          if Assigned(FOnUnlock) then
+             FOnUnlock(Myo, time);
   end;
 end;
 {$ENDIF}
 {$ENDIF}
+
+procedure TMyo.SetArmUnknown;
+begin
+  FArm:={$IFDEF D9}TArm.Unknown{$ELSE}armUnknown{$ENDIF};
+  FXDirection:={$IFDEF D9}TXDirection.Unknown{$ELSE}dirUnknown{$ENDIF};
+end;
 
 procedure TMyo.Disconnect(const ATime:Int64=0);
 begin
   FActive:=False;
   FMyo:=nil;
 
-  FArm:=TArm.Unknown;
-  FXDirection:=TXDirection.Unknown;
+  SetArmUnknown;
 
   {$IFDEF MSWINDOWS}
   IStopRun:=True;
@@ -687,11 +732,18 @@ begin
      FOnDisconnect(Self, ATime);
 end;
 
+{$IFNDEF D9}
+function VectorAngles(const AVector:TVector3D):TPoint3D;
+begin
+
+end;
+{$ENDIF}
+
 function TMyo.Orientation(const AOrientation: TVector3D): TPoint3D;
 begin
-  result:=AOrientation.Angles;
+  result:={$IFDEF D9}AOrientation.Angles{$ELSE}VectorAngles(AOrientation){$ENDIF};
 
-  if FXDirection=TXDirection.TowardElbow then
+  if FXDirection={$IFDEF D9}TXDirection.{$ENDIF}TowardElbow then
   begin
     result.X:=-1*result.X; // Roll
     result.Y:=-1*result.Y; // Pitch
@@ -700,10 +752,12 @@ end;
 
 { TFirmwareVersion }
 
+{$IFDEF D9}
 function TFirmwareVersion.ToString: String;
 begin
   result:=Major.ToString+'.'+Minor.ToString+'.'+Patch.ToString+' '+Hardware.ToString;
 end;
+{$ENDIF}
 
 {$IFDEF ANDROID}
 function TMyo.TListener.GetVersion:TFirmwareVersion;
@@ -826,10 +880,16 @@ begin
      FMyo.FOnOrientation(FMyo, P2, GetOrientation);
 end;
 
-procedure TMyo.TListener.onPair(P1: JMyo; P2: Int64); cdecl;
+procedure TMyo.TListener.onLock(P1: JMyo; P2: Int64); cdecl;
 begin
-  if Assigned(FMyo.FOnPair) then
-     FMyo.FOnPair(FMyo, P2, GetVersion);
+  if Assigned(FMyo.FOnLock) then
+     FMyo.FOnLock(FMyo, P2);
+end;
+
+procedure TMyo.TListener.onUnlock(P1: JMyo; P2: Int64); cdecl;
+begin
+  if Assigned(FMyo.FOnUnlock) then
+     FMyo.FOnUnlock(FMyo, P2);
 end;
 
 procedure TMyo.TListener.onPose(P1: JMyo; P2: Int64; P3: JPose); cdecl;
@@ -851,9 +911,8 @@ procedure TMyo.TListener.onPose(P1: JMyo; P2: Int64; P3: JPose); cdecl;
     if P3=TJPose.JavaClass.FINGERS_SPREAD then
        result:=TPose.FingersSpread
     else
-       // Reserved1,
-    if P3=TJPose.JavaClass.THUMB_TO_PINKY then
-       result:=TPose.ThumbToPinky
+    if P3=TJPose.JavaClass.DOUBLE_TAP then
+       result:=TPose.DoubleTap
     else
        result:=TPose.Unknown;
   end;

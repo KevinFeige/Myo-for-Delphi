@@ -1,9 +1,9 @@
 object MainForm: TMainForm
-  Left = 0
-  Top = 0
+  Left = 135
+  Top = 122
   Caption = 'Myo for Delphi VCL'
-  ClientHeight = 475
-  ClientWidth = 722
+  ClientHeight = 0
+  ClientWidth = 124
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,7 +11,6 @@ object MainForm: TMainForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDesigned
   WindowState = wsMaximized
   OnCreate = FormCreate
   PixelsPerInch = 96
@@ -20,10 +19,11 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 137
-    Height = 475
+    Height = 0
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 0
+    ExplicitHeight = 475
     object LArm: TLabel
       Left = 16
       Top = 144
@@ -123,10 +123,11 @@ object MainForm: TMainForm
     Left = 137
     Top = 0
     Width = 585
-    Height = 475
+    Height = 0
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
+    ExplicitHeight = 475
     object Chart2: TChart
       Left = 0
       Top = 193

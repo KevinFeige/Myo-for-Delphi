@@ -1,12 +1,15 @@
 unit MainUnit;
+{$I TeeDefs.inc}
 
 interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics,
-  Controls, Forms, Dialogs, VclTee.TeeGDIPlus, Vcl.StdCtrls, Myo,
-  VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs, VCLTee.Chart, Vcl.ExtCtrls,
-  System.Math.Vectors;
+  Controls, Forms, Dialogs, TeeGDIPlus, StdCtrls, MyoComponent,
+  {$IFDEF D16}
+  System.Math.Vectors,
+  {$ENDIF}
+  TeEngine, Series, TeeProcs, Chart, ExtCtrls;
 
 type
   TMainForm = class(TForm)
@@ -141,7 +144,7 @@ end;
 
 procedure TMainForm.BVibrateClick(Sender: TObject);
 begin
-  Myo1.Vibrate(TVibrationType.Short);
+  Myo1.Vibrate({$IFDEF D9}TVibrationType.{$ENDIF}Short);
 end;
 
 procedure TMainForm.CBLegendsClick(Sender: TObject);
@@ -203,8 +206,10 @@ begin
 
     AccelX.GetHorizAxis.SetMinMax(tmp-TimeSize,tmp);
 
+    {$IFDEF D9}
     Chart1.Foot.Show;
     Chart1.Foot.Caption:=Accelerometer.Length.ToString;
+    {$ENDIF}
   end;
 end;
 
@@ -212,8 +217,8 @@ procedure TMainForm.Myo1ArmSynchronized(Sender: TMyo; const Time: UInt64;
   const Arm: TArm; const XDirection: TXDirection);
 begin
   case Arm of
-    TArm.Left: LArm.Caption:='Arm: Left';
-   TArm.Right: LArm.Caption:='Arm: Right';
+    {$IFDEF D9}TArm.Left{$ELSE}armLeft{$ENDIF}: LArm.Caption:='Arm: Left';
+   {$IFDEF D9}TArm.Right{$ELSE}armRight{$ENDIF}: LArm.Caption:='Arm: Right';
   else
     LArm.Caption:='Arm: Unknown';
   end;
@@ -233,7 +238,8 @@ begin
   BConnect.Enabled:=True;
 
   BVibrate.Enabled:=True;
-  LVersion.Caption:=Version.ToString;
+
+  LVersion.Caption:={$IFDEF D9}Version.ToString{$ELSE}TMyo.Version(Version){$ENDIF};
 end;
 
 procedure TMainForm.Myo1Disconnect(Sender: TMyo; const Time: UInt64);
@@ -295,14 +301,13 @@ procedure TMainForm.Myo1Pose(Sender: TMyo; const Time: UInt64;
   function PoseToString(const APose:TPose):String;
   begin
     case Pose of
-      TPose.Rest:       result:='Rest';
-      TPose.Fist:       result:='Fist';
-      TPose.WaveIn:     result:='Wave In';
-      TPose.WaveOut:    result:='Wave Out';
-   TPose.FingersSpread: result:='Fingers Spread';
-      TPose.Reserved1:  result:='Reserved 1';
-    TPose.ThumbToPinky: result:='Thumb to Pinky';
-      TPose.Unknown:    result:='Unknown';
+      {$IFDEF D9}TPose.{$ENDIF}Rest:       result:='Rest';
+      {$IFDEF D9}TPose.{$ENDIF}Fist:       result:='Fist';
+      {$IFDEF D9}TPose.{$ENDIF}WaveIn:     result:='Wave In';
+      {$IFDEF D9}TPose.{$ENDIF}WaveOut:    result:='Wave Out';
+{$IFDEF D9}TPose.{$ENDIF}FingersSpread: result:='Fingers Spread';
+      {$IFDEF D9}TPose.{$ENDIF}DoubleTap:  result:='Double Tap';
+      {$IFDEF D9}TPose.Unknown{$ELSE}poseUnknown{$ENDIF}:    result:='Unknown';
     end;
   end;
 

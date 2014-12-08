@@ -33,7 +33,7 @@ requires
   rtl;
 
 contains
-  Myo in 'Myo.pas',
+  MyoComponent in 'MyoComponent.pas',
   MyoDLL in 'MyoDLL.pas';
 
 end.

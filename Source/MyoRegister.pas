@@ -7,7 +7,7 @@ procedure Register;
 implementation
 
 uses
-  Classes, Myo;
+  Classes, MyoComponent;
 
 procedure Register;
 begin
